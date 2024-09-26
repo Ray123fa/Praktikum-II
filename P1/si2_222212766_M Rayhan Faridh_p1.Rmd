@@ -1,0 +1,468 @@
+---
+title: "Praktikum 1"
+author: "Muhammad Rayhan Faridh"
+date: "2024-09-26"
+output:
+  word_document: default
+---
+
+```{r}
+# Panggil library yang diperlukan
+library(ggplot2)
+```
+
+# 3.1
+Let x' = [5, 1, 3] and y' = [-1, 3, 1].
+```{r}
+x <- c(5, 1, 3)
+y <- c(-1,3,1)
+```
+
+a)  Graph the two vectors.
+```{r}
+# Data frame to plot vectors
+vector_data <- data.frame(
+  x = c(0, 0), 
+  y = c(0, 0), 
+  xend = c(x[1], y[1]), 
+  yend = c(x[2], y[2])
+)
+
+# Plot the vectors
+ggplot(vector_data, aes(x = x, y = y)) + 
+  geom_segment(aes(xend = xend, yend = yend), arrow = arrow(length = unit(0.3, "cm"))) + 
+  xlim(-2, 6) + 
+  ylim(-2, 4) +
+  ggtitle("Vectors x' and y'") + 
+  xlab("x") + 
+  ylab("y") + 
+  theme_minimal()
+```
+
+b)  Find the length of x, the angle between x and y, and the projection of y on x.
+```{r}
+# Length of x
+length_x <- sqrt(sum(x^2))
+length_x
+
+# Dot product of x and y
+dot_product <- sum(x * y)
+
+# Length of y
+length_y <- sqrt(sum(y^2))
+
+# Cosine of the angle
+cos_theta <- dot_product / (length_x * length_y)
+
+# Angle between x and y
+angle <- acos(cos_theta) * (180 / pi)
+angle
+
+# Projection of y on x
+proj_scalar <- dot_product / sum(x^2)
+projection <- proj_scalar * x
+projection
+```
+
+c) Since x_bar = 3 and y_bar = 1, graph [5-3, 1-3, 3-3] = [2, -2, 0] and [-1-1, 3-1 1-1] = [-2, 2, 0]
+```{r}
+# Define the adjusted vectors
+adjusted_vec1 <- c(2, -2, 0)
+adjusted_vec2 <- c(-2, 2, 0)
+
+# Data frame to plot vectors
+adjusted_vector_data <- data.frame(
+  x = c(0, 0), 
+  y = c(0, 0), 
+  xend = c(adjusted_vec1[1], adjusted_vec2[1]), 
+  yend = c(adjusted_vec1[2], adjusted_vec2[2])
+)
+
+# Plot the vectors
+ggplot(adjusted_vector_data, aes(x = x, y = y)) + 
+  geom_segment(aes(xend = xend, yend = yend), arrow = arrow(length = unit(0.3, "cm"))) + 
+  xlim(-3, 3) + 
+  ylim(-3, 3) +
+  ggtitle("Adjusted Vectors") + 
+  xlab("x") + 
+  ylab("y") + 
+  theme_minimal()
+```
+
+# 3.2
+Given the matrices
+```{r}
+A <- matrix(c(-1, 3, 
+              4, 2),
+            ncol=2,byrow=TRUE)
+B <- matrix(c(4, -3, 
+              1, -2,
+              -2, 0),
+            ncol=2,byrow=TRUE)
+C <- matrix(c(5,-4,2),
+            ncol=1,byrow=TRUE)
+
+list(A=A, B=B, C=C)
+```
+perform the indicated multiplications.
+
+a)  5A
+```{r}
+LimaA <- 5 * A
+LimaA
+```
+
+b)  BA
+```{r}
+BA <- B %*% A
+BA
+```
+
+c)  A'B'
+```{r}
+AtBt <- t(A) %*% t(B)
+AtBt
+```
+
+d)  C'B
+```{r}
+CtB <- t(C) %*% B
+CtB
+```
+
+e)  Is AB defined?
+```{r}
+if ( ncol(A) == nrow(B) ) {
+  print("AB is defined")
+} else {
+  print("AB is not defined")
+}
+```
+
+# 3.5
+Check that
+```{r}
+Q = matrix(c(5/13, 12/13,
+             -12/13, 5/13), ncol=2, byrow=TRUE)
+Q
+```
+is an orthogonal matrix.
+
+```{r}
+# Check if Q^T * Q is the identity matrix
+is_orthogonal <- all(round(t(Q) %*% Q, 10) == diag(2))
+
+# Print the result
+if (is_orthogonal) {
+  print("Matriks Q adalah matriks ortogonal.")
+} else {
+  print("Matriks Q bukan matriks ortogonal.")
+}
+```
+
+# 3.6
+Let
+```{r}
+A <- matrix(c(9, -2,
+              -2, 6), ncol=2, byrow=TRUE)
+A
+```
+a) Is A symmetric?
+```{r}
+is_symmetric <- all(A == t(A))
+if (is_symmetric) {
+  print("Matriks A adalah simetris.")
+} else {
+  print("Matriks A bukan simetris.")
+}
+```
+
+b) Show that A is positive definite.
+```{r}
+eigen_A <- eigen(A)
+eigenvalues <- eigen_A$values
+is_positive_definite <- all(eigenvalues > 0)
+if (is_positive_definite) {
+  print("Matriks A adalah definit positif.")
+} else {
+  print("Matriks A bukan definit positif.")
+}
+```
+
+# 3.7
+Let A be as given in Exercise 3.6.
+```{r}
+A
+```
+a) Determine the eigenvalues and eigenvectors of A.
+```{r}
+eigenvectors <- eigen_A$vectors
+
+list(EigenValues = eigenvalues, EigenVectors = eigenvectors)
+```
+
+b) Write the spectral decomposition of A.
+```{r}
+# Spectral decomposition is A = PDP^(-1)
+# Where P is the matrix of eigenvectors and D is the diagonal matrix of eigenvalues
+P <- eigenvectors
+D <- diag(eigenvalues)
+spectral_decomp <- P %*% D %*% solve(P)
+
+list(P = P, Lambda = D, SpectralDecomposition = spectral_decomp)
+```
+
+c) Find A^-1.
+```{r}
+inv_A <- solve(A)
+inv_A
+```
+
+d) Find the eigenvalues and eigenvectors of A^-1.
+```{r}
+eigen_inv_A <- eigen(inv_A)
+eigenvalues_inv_A <- eigen_inv_A$values
+eigenvectors_inv_A <- eigen_inv_A$vectors
+
+list(EigenValues = eigenvalues_inv_A, EigenVectors = eigenvectors_inv_A)
+```
+
+# 3.8
+Given the matrix
+```{r}
+A <- matrix(c(1,2,
+              2,-2), ncol=2, byrow=TRUE)
+A
+```
+find the eigenvalues lambda_1 and lambda_2 and the associated normalized eigenvectors e_1 and e_2. Determine the spectral decomposition of A.
+```{r}
+# Eigenvalues and eigenvectors
+eigen_A <- eigen(A)
+eigenvalues <- eigen_A$values
+eigenvectors <- eigen_A$vectors
+
+# Spectral decomposition
+P <- eigenvectors
+D <- diag(eigenvalues)
+spectral_decomp <- P %*% D %*% solve(P)
+
+list(P = P, Lambda = D, SpectralDecomposition = spectral_decomp)
+```
+
+# 3.9
+Let A be as in Exercise 3.8.
+```{r}
+A
+```
+a) Find A^-1.
+```{r}
+inv_A <- solve(A)
+inv_A
+```
+
+b) Compute the eigenvalues and eigenvectors of A^-1.
+```{r}
+eigen_inv_A <- eigen(inv_A)
+eigenvalues_inv_A <- eigen_inv_A$values
+eigenvectors_inv_A <- eigen_inv_A$vectors
+
+list(EigenValues = eigenvalues_inv_A, EigenVectors = eigenvectors_inv_A)
+```
+
+c) Write the spectral decomposition of and compare it with that of A^-1 from Exercise 3.8.
+```{r}
+# Spectral decomposition of A^-1
+P_inv_A <- eigenvectors_inv_A
+D_inv_A <- diag(eigenvalues_inv_A)
+spectral_decomp_inv_A <- P_inv_A %*% D_inv_A %*% solve(P_inv_A)
+
+# Compare with the spectral decomposition of A from Exercise 3.8
+list(SpectralDecomposition_A = spectral_decomp, SpectralDecomposition_Inv_A = spectral_decomp_inv_A)
+```
+
+# 3.21
+Using the matrix
+```{r}
+A <- matrix(c(1,1,
+              2,-2,
+              2,2), ncol=2, byrow=TRUE)
+A
+```
+a) Calculate and obtain its eigenvalues and eigenvectors.
+```{r}
+AtA <- t(A) %*% A
+eigen_AtA <- eigen(AtA)
+eigenvalues_AtA <- eigen_AtA$values
+eigenvectors_AtA <- eigen_AtA$vectors
+
+list(EigenValues = eigenvalues_AtA, EigenVectors = eigenvectors_AtA)
+```
+
+b) Calculate and obtain its eigenvalues and eigenvectors. Check that the nonzero eigenvalues are the same as those in part a.
+```{r}
+AAt <- A %*% t(A)
+eigen_AAt <- eigen(AAt)
+eigenvalues_AAt <- eigen_AAt$values
+eigenvectors_AAt <- eigen_AAt$vectors
+
+list(EigenValues = eigenvalues_AAt, EigenVectors = eigenvectors_AAt)
+
+# Check if the nonzero eigenvalues are the same
+nonzero_eigenvalues_AtA <- eigenvalues_AtA[eigenvalues_AtA != 0]
+nonzero_eigenvalues_AAt <- eigenvalues_AAt[eigenvalues_AAt != 0]
+
+if (all(round(nonzero_eigenvalues_AAt, 10) == round(nonzero_eigenvalues_AtA, 10))) {
+  print("Nonzero eigenvalues sama.")
+} else {
+  print("Nonzero eigenvalues tidak sama.")
+}
+```
+
+c) Obtain the singular-value decomposition of A.
+```{r}
+svd_A <- svd(A)
+
+list(U = svd_A$u, Sigma = diag(svd_A$d), V = svd_A$v)
+```
+
+# 3.24
+Let X have covariance matrix
+```{r}
+Sigma <- matrix(c(4,0,0,
+                  0,9,0,
+                  0,0,1), ncol=3, byrow=TRUE)
+Sigma
+```
+Find
+a) Sigma^(-1).
+```{r}
+inv_Sigma <- solve(Sigma)
+inv_Sigma
+```
+
+b) The eigenvalues and eigenvectors of Sigma.
+```{r}
+eigen_Sigma <- eigen(Sigma)
+eigenvalues_Sigma <- eigen_Sigma$values
+eigenvectors_Sigma <- eigen_Sigma$vectors
+
+list(EigenValues = eigenvalues_Sigma, EigenVectors = eigenvectors_Sigma)
+```
+
+c) The eigenvalues and eigenvectors of Sigma^(-1).
+```{r}
+eigen_inv_Sigma <- eigen(inv_Sigma)
+eigenvalues_inv_Sigma <- eigen_inv_Sigma$values
+eigenvectors_inv_Sigma <- eigen_inv_Sigma$vectors
+
+list(EigenValues = eigenvalues_inv_Sigma, EigenVectors = eigenvectors_inv_Sigma)
+```
+
+# 3.25
+Let X have covariance matrix
+```{r}
+Sigma <- matrix(c(25,-2,4,
+                  -2,4,1,
+                  4,1,9), ncol=3, byrow=TRUE)
+Sigma
+```
+a) Determine rho and V^(1/2)
+```{r}
+# Eigenvalues and eigenvectors of Sigma
+eigen_Sigma <- eigen(Sigma)
+eigenvalues_Sigma <- eigen_Sigma$values
+eigenvectors_Sigma <- eigen_Sigma$vectors
+
+# Diagonal matrix of eigenvalues (rho)
+rho <- diag(eigenvalues_Sigma)
+
+# Matrix of eigenvectors (V^1/2)
+V_half <- eigenvectors_Sigma
+
+list(Rho = rho, V_half = V_half)
+```
+
+b) Multiply your matrices to check the relation V^1/2 * rho * V^1/2 = Sigma.
+```{r}
+result <- V_half %*% rho %*% t(V_half)
+result
+
+# Check if the result is equals to Sigma
+if (all(round(result, 10) == round(Sigma, 10))) {
+  print("Hubungan V^1/2 * rho * V^1/2 = Sigma terpenuhi.")
+} else {
+  print("Hubungan V^1/2 * rho * V^1/2 = Sigma tidak terpenuhi.")
+}
+```
+
+# 3.41
+You are given the random vector X' = [X1,X2,X3,X4] with mean vector mu' = [1,2,3,4] and variance-covariance matrix
+```{r}
+mu_X <- c(3,2,-2,0)
+Sigma_X <- diag(c(3,3,3,3))
+Sigma_X
+```
+Let
+```{r}
+A <- matrix(c(1,-1,0,0,
+              1,1,-2,0,
+              1,1,1,-3), ncol=4, byrow=TRUE)
+A
+```
+a) Find E(AX), the mean of AX
+```{r}
+# Calculate E(AX) = A * mu_X
+E_AX <- A %*% mu_X
+E_AX
+```
+
+b) Find Cov(AX),the variances and covariances of AX.
+```{r}
+# Calculate Cov(AX) = A * Sigma_X * A'
+Cov_AX <- A %*% Sigma_X %*% t(A)
+Cov_AX
+```
+
+c) Which pairs of linear combinations have zero covariances?
+```{r}
+# Find the pairs of linear combinations with zero covariances
+zero_covariances <- which(Cov_AX == 0, arr.ind = TRUE)
+
+# Print the pairs of linear combinations with zero covariances
+zero_covariances
+```
+Pasangan kombinasi linier yang memiliki kovarian nol adalah (1, 2) dan (2, 1), (1, 3) dan (3, 1), serta (2, 3) dan (3, 2).
+
+# 3.42
+Repeat Exercise 3.41, but with
+```{r}
+Sigma_X <- matrix(c(3,1,1,1,
+                    1,3,1,1,
+                    1,1,3,1,
+                    1,1,1,3), ncol=4, byrow=TRUE)
+
+list(Sigma_X = Sigma_X, A = A)
+```
+a) Find E(AX), the mean of AX
+```{r}
+# Calculate E(AX) = A * mu_X
+E_AX <- A %*% mu_X
+E_AX
+```
+
+b) Find Cov(AX),the variances and covariances of AX.
+```{r}
+# Calculate Cov(AX) = A * Sigma_X * A'
+Cov_AX <- A %*% Sigma_X %*% t(A)
+Cov_AX
+```
+
+c) Which pairs of linear combinations have zero covariances?
+```{r}
+# Find the pairs of linear combinations with zero covariances
+zero_covariances <- which(Cov_AX == 0, arr.ind = TRUE)
+
+# Print the pairs of linear combinations with zero covariances
+zero_covariances
+```
+Pasangan kombinasi linier yang memiliki kovarian nol adalah (1, 2) dan (2, 1), (1, 3) dan (3, 1), serta (2, 3) dan (3, 2).

@@ -50,7 +50,7 @@
             </td>
             <td>
                 <a th:href="@{/edit/{id}(id=${mahasiswa.id})}" class="btn btn-sm btn-success">Edit</a> |
-                <a th:href="@{/delete/{id}(id=${mahasiswa.id})}" class="btn btn-sm btn-danger">Hapus</a>
+                <a th:onclick="'return confirmDelete(' + ${mahasiswa.id} + ');'" class="btn btn-sm btn-danger">Hapus</a>
             </td>
         </tr>
     </table>
@@ -58,6 +58,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>
+    <script>
+        function confirmDelete(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                window.location.href = "/delete/" + id;
+            }
+        }
+    </script>
 </body>
 
 </html>

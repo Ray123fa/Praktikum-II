@@ -58,7 +58,7 @@ public class MahasiswaController {
     }
 
     @PostMapping("/edit/{id}")
-    public String editMahasiswa(@PathVariable("id") Long id, @Valid @RequestBody Mahasiswa mahasiswa, BindingResult result) {
+    public String editMahasiswa(@PathVariable("id") Long id, @Valid Mahasiswa mahasiswa, BindingResult result) {
         if (result.hasErrors()) {
             mahasiswa.setId(id);
             return "edit_mahasiswa";

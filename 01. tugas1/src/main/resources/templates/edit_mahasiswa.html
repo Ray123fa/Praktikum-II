@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Edit Mahasiswa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+    <style>
+        td {
+            padding-right: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        input {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="container-fluid">
+    <h2 class="mb-4">Edit Mahasiswa</h2>
+
+    <form th:object="${mahasiswa}" th:action="@{/edit/{id}(id=${mahasiswa.id})}" method="post">
+        <table>
+            <tr>
+                <td><label for="nim">NIM</label></td>
+                <td><input type="number" id="nim" th:field="*{nim}" required /></td>
+            </tr>
+            <tr>
+                <td><label for="nama">Nama</label></td>
+                <td><input type="text" id="nama" th:field="*{nama}" required /></td>
+            </tr>
+            <tr>
+                <td><label for="jurusan">Jurusan</label></td>
+                <td><input type="text" id="jurusan" th:field="*{jurusan}" required /></td>
+            </tr>
+            <tr>
+                <td><label for="tanggalLahir">Tanggal Lahir</label></td>
+                <td><input type="date" id="tanggalLahir" th:field="*{tanggalLahir}" required /></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="d-flex justify-content-end align-items-center gap-2">
+                        <a href="/" class="btn btn-warning">Kembali</a>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+    <script th:src="@{/js/checkValidation.js}"></script>
+</body>
+
+</html>

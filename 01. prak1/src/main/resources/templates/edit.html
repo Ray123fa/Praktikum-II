@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Item</title>
+</head>
+<body>
+    <h1>Edit Item</h1>
+    
+    <!-- Form for updating an item -->
+    <form th:action="@{/update/{index}(index=${index})}" method="post">
+        <input type="text" name="item" th:value="${item}" required>
+        <button type="submit">Update</button>
+    </form>
+    
+    <!-- Link back to the list of items -->
+    <a th:href="@{/}">Back to List</a>
+</body>
+</html>

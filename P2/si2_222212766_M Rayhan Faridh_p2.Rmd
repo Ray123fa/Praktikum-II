@@ -1,0 +1,55 @@
+---
+title: "Praktikum 2"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-03"
+output:
+  word_document: default
+---
+
+Diberikan data sebagai berikut dimana tiga variable diukur dalam satuan milliequivalent per 100gr pada 10 lokasi berbeda, dimana:
+```{r}
+y1<-c(35,35,40,10,6,20,35,35,35,30)
+y2<-c(3.5,4.9,30,2.8,2.7,2.8,4.6,10.9,8,1.6)
+y3<-c(2.8,2.7,4.38,3.21,2.73,2.81,2.88,2.9,3.28,3.2)
+
+list("available soil calcium"=y1,"exchangeable soil calcium"=y2,"turnip green calcium"=y3)
+```
+
+a) Hitung matriks kovarians S dari matriks data Y!
+```{r}
+Ydat<-data.frame(y1,y2,y3) # convert data menjadi data frame
+ybar<-apply(Ydat,2,mean) # hitung mean setiap variabel
+d1<-y1-ybar[1]
+d2<-y2-ybar[2]
+d3<-y3-ybar[3]
+
+dmat<-matrix(c(d1,d2,d3),ncol=3)
+# Atau matriks jarak juga bisa kita peroleh sbb:
+# dmat<-Ydat-matrix(rep(ybar,10),nrow = 10,byrow = TRUE)
+
+#Maka matriks kovarians Sn
+Sn<-(1/10)*t(dmat)%*%dmat
+
+list(VektorDeviasi=dmat, MatriksKovarians=Sn)
+```
+
+b) Hitung matriks korelasi R!
+```{r}
+# Calculate the standard deviations for each variable
+std_devs <- sqrt(diag(Sn))
+
+# Create a diagonal matrix with the standard deviations
+D <- diag(std_devs)
+
+# Calculate the correlation matrix R
+R <- solve(D) %*% Sn %*% solve(D)
+
+list(MatriksKorelasi=R)
+```
+
+c) Hitung generalized variance |S|!
+```{r}
+S <- (10/9)*Sn
+GenVar <- det(S)
+list(GeneralizedVariance=GenVar)
+```

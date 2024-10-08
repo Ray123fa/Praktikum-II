@@ -1,0 +1,374 @@
+---
+title: "Penugasan Praktikum 2"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-06"
+output:
+  word_document: default
+---
+
+2.1
+```{r}
+X <- matrix(c(9, 5, 1, 1, 3, 2), nrow = 3)
+X
+```
+
+a. Gambar scatter plot pada dimensi p = 2, beserta rerata sampel
+```{r}
+#hitung rerata sampel
+mean_sample <- colMeans(X)
+mean_sample
+
+#gambar scatter plot
+plot(X[,1], X[,2], xlab = "Dimensi 1", ylab = "Dimensi 2", 
+     main = "Scatter Plot with Sample Mean", pch = 19, col = "blue")
+
+#tambahkan rerata sampel ke plot
+points(mean_sample[1], mean_sample[2], col = "red", pch = 19, cex = 2)
+
+#tambahkan grid
+grid()
+```
+b. Gambar n = 3 dimensi, dan plot vektor deviasinya
+```{r}
+#install.packages("scatterplot3d")
+library(scatterplot3d)
+
+#gambar plot 3D dengan vektor pertama dan kedua
+s3d <- scatterplot3d(c(0, X[1,1]), c(0, X[2,1]), c(0, X[3,1]), type = "l", color = "blue", lwd = 2,
+                     xlab = "X", ylab = "Y", zlab = "Z", xlim = c(-2, 10), ylim = c(-2, 6), zlim = c(-2, 3), 
+                     main = "Plot 3 Dimensi")
+
+#tambahkan vektor kedua ke dalam plot
+s3d$points3d(c(0, X[1,2]), c(0, X[2,2]), c(0, X[3,2]), type = "l", col = "red", lwd = 2)
+
+#tambahkan titik akhir dari kedua vektor
+s3d$points3d(X[1,1], X[2,1], X[3,1], col = "blue", pch = 19)
+s3d$points3d(X[1,2], X[2,2], X[3,2], col = "red", pch = 19)
+
+#vektor deviasi
+mean_sample
+
+vektor_1 <- rep(1, 3)
+
+xbar1_1 <- mean_sample[1]*vektor_1
+xbar1_1
+
+xbar2_2 <- mean_sample[2]*vektor_1
+xbar2_2
+
+d1 <- X[,1] - xbar1_1
+d1
+
+d2 <- X[,2] - xbar2_2
+d2
+```
+c. Gambar vektor deviasi dari (b), hitung panjang dan sudut antara vektor. Hubungkan dengan Sn dan R
+Gambar vektor deviasi
+```{r}
+library(scatterplot3d)
+
+#gambar plot 3D dengan vektor pertama dan kedua
+vektor_dev <- scatterplot3d(c(0, d1[1]), c(0, d1[2]), c(0, d1[3]), type = "l", color = "blue", lwd = 2,
+                     xlab = "X", ylab = "Y", zlab = "Z", xlim = c(-2, 5), ylim = c(-2, 1), zlim = c(-5, 2), 
+                     main = "Vektor Deviasi")
+
+#tambahkan vektor kedua ke dalam plot
+vektor_dev$points3d(c(0, d2[1]), c(0, d2[2]), c(0, d2[3]), type = "l", col = "red", lwd = 2)
+
+#tambahkan titik akhir dari kedua vektor
+vektor_dev$points3d(d1[1], d1[2], d1[3], col = "blue", pch = 19)
+vektor_dev$points3d(d2[1], d2[2], d2[3], col = "red", pch = 19)
+```
+panjang vektor deviasi
+```{r}
+#panjang vektor d1
+Ld1 <- sqrt(sum(d1^2))
+Ld1
+
+#panjang vektor d2
+Ld2 <- sqrt(sum(d2^2))
+Ld2
+```
+sudut cosinus antara dua vektor
+```{r}
+cos_theta12 <- (sum(t(d1)%*%d2)/(Ld1*Ld2))
+cos_theta12
+
+theta12 <- acos(cos_theta12)%*%180/pi
+theta12
+```
+Hubungkan dengan Sn dan R
+```{r}
+#membentuk maktiks Sn
+s11 <- Ld1^2/3
+s11
+
+s22 <- Ld2^2/3
+s22
+
+s12_s21 <- (t(d1)%*%d2)/3
+s12_s21
+
+Sn <- matrix(c(s11, s12_s21, s12_s21, s22), nrow = 2)
+Sn
+
+#membentuk matriks R
+r12_r21 <- s12_s21/(sqrt(s11)%*%sqrt(s22))
+r12_r21
+
+R <- matrix(c(1, r12_r21, r12_r21, 1), nrow = 2)
+R
+```
+
+2.5 (bagian A)
+Hitung Generalized Sample Variance |S|
+a. |S| dari matriks pada 2.1
+```{r}
+S11 <- Ld1^2/(3-1)
+S11
+
+S22 <- Ld2^2/(3-1)
+S22
+
+S12 <- t(d1)%*%d2/(3-1)
+S12
+
+S <- matrix(c(S11, S12, S12, S22), nrow = 2)
+S
+
+gen_sample_var <- det(S)
+gen_sample_var
+
+#cara cepat mencari generalized sample variance
+det(cov(X))
+```
+
+2.2
+```{r}
+X <- matrix(c(3, 6, 3, 4, -2, 1), nrow = 3)
+X
+```
+a. Gambar scatter plot pada dimensi p = 2, beserta rerata sampel
+```{r}
+#hitung rerata sampel
+mean_sample <- colMeans(X)
+mean_sample
+
+#gambar scatter plot
+plot(X[,1], X[,2], xlab = "Dimensi 1", ylab = "Dimensi 2", 
+     main = "Scatter Plot with Sample Mean", pch = 19, col = "blue")
+
+#tambahkan rerata sampel ke plot
+points(mean_sample[1], mean_sample[2], col = "red", pch = 19, cex = 2)
+
+#tambahkan grid
+grid()
+```
+b. Gambar n = 3 dimensi, dan plot vektor deviasinya
+```{r}
+#install.packages("scatterplot3d")
+library(scatterplot3d)
+
+#gambar plot 3D dengan vektor pertama dan kedua
+s3d <- scatterplot3d(c(0, X[1,1]), c(0, X[2,1]), c(0, X[3,1]), type = "l", color = "blue", lwd = 2,
+                     xlab = "X", ylab = "Y", zlab = "Z", xlim = c(-2, 5), ylim = c(-4, 8), zlim = c(-2, 4), 
+                     main = "Plot 3 Dimensi")
+
+#tambahkan vektor kedua ke dalam plot
+s3d$points3d(c(0, X[1,2]), c(0, X[2,2]), c(0, X[3,2]), type = "l", col = "red", lwd = 2)
+
+#tambahkan titik akhir dari kedua vektor
+s3d$points3d(X[1,1], X[2,1], X[3,1], col = "blue", pch = 19)
+s3d$points3d(X[1,2], X[2,2], X[3,2], col = "red", pch = 19)
+
+#vektor deviasi
+mean_sample
+
+vektor_1 <- rep(1, 3)
+
+xbar1_1 <- mean_sample[1]*vektor_1
+xbar1_1
+
+xbar2_2 <- mean_sample[2]*vektor_1
+xbar2_2
+
+d1 <- X[,1] - xbar1_1
+d1
+
+d2 <- X[,2] - xbar2_2
+d2
+```
+c. Gambar vektor deviasi dari (b), hitung panjang dan sudut antara vektor. Hubungkan dengan Sn dan R
+Gambar vektor deviasi
+```{r}
+library(scatterplot3d)
+
+#gambar plot 3D dengan vektor pertama dan kedua
+vektor_dev <- scatterplot3d(c(0, d1[1]), c(0, d1[2]), c(0, d1[3]), type = "l", color = "blue", lwd = 2,
+                     xlab = "X", ylab = "Y", zlab = "Z", xlim = c(-2, 4), ylim = c(-4, 2), zlim = c(-2, 2), 
+                     main = "Vektor Deviasi")
+
+#tambahkan vektor kedua ke dalam plot
+vektor_dev$points3d(c(0, d2[1]), c(0, d2[2]), c(0, d2[3]), type = "l", col = "red", lwd = 2)
+
+#tambahkan titik akhir dari kedua vektor
+vektor_dev$points3d(d1[1], d1[2], d1[3], col = "blue", pch = 19)
+vektor_dev$points3d(d2[1], d2[2], d2[3], col = "red", pch = 19)
+```
+panjang vektor deviasi
+```{r}
+#panjang vektor d1
+Ld1 <- sqrt(sum(d1^2))
+Ld1
+
+#panjang vektor d2
+Ld2 <- sqrt(sum(d2^2))
+Ld2
+```
+sudut cosinus antara dua vektor
+```{r}
+cos_theta12 <- (sum(t(d1)%*%d2)/(Ld1*Ld2))
+cos_theta12
+
+theta12 <- acos(cos_theta12)%*%180/pi
+theta12
+```
+Hubungkan dengan Sn dan R
+```{r}
+#membentuk maktiks Sn
+s11 <- Ld1^2/3
+s11
+
+s22 <- Ld2^2/3
+s22
+
+s12_s21 <- (t(d1)%*%d2)/3
+s12_s21
+
+Sn <- matrix(c(s11, s12_s21, s12_s21, s22), nrow = 2)
+Sn
+
+#membentuk matriks R
+r12_r21 <- s12_s21/(sqrt(s11)%*%sqrt(s22))
+r12_r21
+
+R <- matrix(c(1, r12_r21, r12_r21, 1), nrow = 2)
+R
+```
+
+2.5 (bagian B)
+Hitung Generalized Sample Variance |S|
+a. |S| dari matriks pada 2.1
+```{r}
+S11 <- Ld1^2/(3-1)
+S11
+
+S22 <- Ld2^2/(3-1)
+S22
+
+S12 <- t(d1)%*%d2/(3-1)
+S12
+
+S <- matrix(c(S11, S12, S12, S22), nrow = 2)
+S
+
+gen_sample_var <- det(S)
+gen_sample_var
+
+#cara cepat mencari generalized sample variance
+det(cov(X))
+```
+
+2.6
+```{r}
+X <- matrix(c(-1, 2, 5, 3, 4, 2, -2, 2, 3), nrow = 3)
+X
+```
+a. Hitung matriks deviasi (residual). Periksa rank matriks
+Matriks residual
+```{r}
+#hitung rerata tiap kolom
+mean_sample <- colMeans(X)
+mean_sample
+
+#matriks deviasi (residual)
+X_residual <- sweep(X, 2, mean_sample)
+X_residual
+```
+Periksa rank matriks residual
+```{r}
+rank_residual <- qr(X_residual)
+rank_residual$rank
+#matriks full rank jika rank matriks sama dengan jumlah kolomnya. diperoleh rank matriks sebesar 2, sedangkan jumlah kolomnya sebanyak 3, maka matriks X tidak full rank
+```
+b. Hitung S dan Generalized Sample Variance |S|
+```{r}
+#hitung matriks kovarian sampel (S)
+S <- cov(X)
+S
+
+#hitung generalized sample variance |S|
+gen_sample_var <- det(S)
+gen_sample_var
+#diperoleh |S| kecil dan mendekati nol, artinya data terletak di atau dekat subruang berdimensi rendah menunjukkan beberapa variabel sangat berkorelasi, atau data mengalami multikolinieritas (berhubungan linier satu sama lain)
+```
+c. Hitung total sample variance
+```{r}
+total_sample_var <- sum(diag(S))
+total_sample_var
+```
+
+2.9
+```{r}
+#x1 : score on first test
+#x2 : score on second test
+#x3 : total score on the two test
+
+X <- matrix(c(12, 18, 14, 20, 16, 17, 20, 16, 18, 19, 29, 38, 30, 38, 35), ncol = 3)
+X
+```
+a. Matriks data rerata corrected, verifikasi kolomnya bergantung linier. Tentukan vektor yang membentuk ketergantungan linier
+Matriks data corrected
+```{r}
+#rerata sampel
+mean_sample <- colMeans(X)
+mean_sample
+
+#rerata corrected (matriks deviasi)
+mean_corrected <- sweep(X, 2, mean_sample)
+mean_corrected
+
+#periksa ketergantungan linier
+rank_mean_corrected <- qr(mean_corrected)$rank
+rank_mean_corrected
+#diperoleh rank matriks mean corrected sebesar 2, lebih kecil dari jumlah kolomnya yaitu 3, maka kolom-kolom dalam matriks memiliki ketergantungan secara linier
+
+#menentukan vektor a' yang menunjukkan ketergantungan linier
+#berdasarkan matriks pada mean_corrected, diperoleh mean_corrected[,1]+mean_corrected[,2]=mean_corrected[,3], sehingga dapat dituliskan a=[1, 1, -1] 
+
+a <- matrix(c(1, 1, -1), ncol = 1)
+
+#rerata corrected * a
+mean_corrected%*%a
+
+#maka matriks mean corrected menunjukkan ketergantungan linier
+```
+b. Hitung sample covariance S, dan periksa apakah generalized variance |S| bernilai 0. Tunjukkan Sa = 0
+```{r}
+#sample variance
+S <- cov(X)
+S
+
+#generalized sample variance
+gen_sample_var <- det(S)
+gen_sample_var
+#diperoleh |S| mendekati nol
+
+#mencari Sa
+Sa <- S%*%a
+Sa
+```
+c. Tunjukkan bahwa kolom ketiga adalah penjumlahan dari kolom pertama dan kedua
+```{r}
+#sudah dibuktikukan pada bagian(a)
+```

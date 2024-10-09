@@ -18,8 +18,6 @@ public class JsonRpcController {
     @PostMapping("/jsonrpc")
     public ResponseEntity<Object> handleJsonRpcRequest(@RequestBody
                                                        JsonRpcRequest request) {
-        JsonRpcResponse response = new JsonRpcResponse();
-
         try {
             String method = request.getMethod();
             JsonNode params = request.getParams();
@@ -30,25 +28,19 @@ public class JsonRpcController {
             switch (method) {
                 case "add":
                     result = calculatorService.add(a, b);
-                    response.setResult(result);
-                    break;
+                    return ResponseEntity.ok(new JsonRpcResponse(result, request.getId()));
                 case "subtract":
                     result = calculatorService.subtract(a, b);
-                    response.setResult(result);
-                    break;
+                    return ResponseEntity.ok(new JsonRpcResponse(result, request.getId()));
                 case "multiply":
                     result = calculatorService.multiply(a, b);
-                    response.setResult(result);
-                    break;
+                    return ResponseEntity.ok(new JsonRpcResponse(result, request.getId()));
                 case "divide":
                     result = calculatorService.divide(a, b);
-                    response.setResult(result);
-                    break;
+                    return ResponseEntity.ok(new JsonRpcResponse(result, request.getId()));
                 default:
                     return ResponseEntity.badRequest().build();
             }
-            response.setId(request.getId());
-            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

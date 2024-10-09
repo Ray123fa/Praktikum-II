@@ -2,9 +2,14 @@ package com.example.calculator1.rpc;
 
 public class JsonRpcResponse {
     private String jsonrpc;
-    private Object result;
+    private double result;
     private Object error;
     private String id;
+
+    public JsonRpcResponse(double result, String id) {
+        this.result = result;
+        this.id = id;
+    }
 
     public String getJsonrpc() {
         return jsonrpc;
@@ -12,14 +17,6 @@ public class JsonRpcResponse {
 
     public void setJsonrpc(String jsonrpc) {
         this.jsonrpc = jsonrpc;
-    }
-
-    public Object getResult() {
-        return result;
-    }
-
-    public void setResult(Object result) {
-        this.result = result;
     }
 
     public Object getError() {
@@ -36,5 +33,13 @@ public class JsonRpcResponse {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public double getResult() {
+        return result;
+    }
+
+    public void setResult(double result) {
+        this.result = result;
     }
 }

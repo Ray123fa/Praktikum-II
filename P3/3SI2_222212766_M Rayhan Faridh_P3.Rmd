@@ -1,0 +1,213 @@
+---
+title: "Praktikum 3"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-10"
+output: word_document
+---
+
+Siapkan library yang akan digunakan:
+```{r}
+library(rgl)
+library(plot3D)
+library(plot3Drgl)
+library(squash)
+library(MASS)
+library(mixtools)
+library(car)
+library(readxl)
+library(MVN)
+library(RVAideMemoire)
+```
+
+1. Membuat Garis Kontur
+```{r}
+# Siapkan data
+mu<-c(0,0)
+Sig<-matrix(c(1,0,0,1),nrow = 2,byrow = TRUE)
+bvn1 <- mvrnorm(500, mu = mu, Sigma = Sig )
+
+# Scatterplot
+plot(bvn1[,1],bvn1[,2],pch=20)
+smoothScatter(bvn1[,1],bvn1[,2],colramp = rainbow2)
+```
+
+```{r}
+# Create cuts:
+x_c <- cut(bvn1[,1], 20)
+y_c <- cut(bvn1[,2], 20)
+
+# Calculate joint counts at cut levels:
+z <- table(x_c, y_c)
+
+# Histogram 2D
+hist2(x_c,y_c, key.args = list(stretch = 2))
+
+# Plot as a 3D histogram:
+hist3D(z=z, border="black")
+
+# Histogram 3D interaktif
+hist3Drgl(z=z, border="black")
+```
+
+Menggambar Ellipsoid Data Bivariate Normal
+
+Contoh 1:
+```{r}
+mu1<-c(0,0)
+Sig1<-matrix(c(1,0.5,0.5,1),nrow = 2)
+
+# generate random bivariate normal
+data_bvn <- mvrnorm(500, mu = mu1, Sigma = Sig1 )
+plot(data_bvn,xlab="X1",ylab="X2")
+ellipse(mu1, Sig1, 0.05, col="red")#garis contour 95%
+
+# garis kontur 90%
+ellipse(mu1, Sig1, 0.1, col="blue",lwd=2)
+```
+
+Contoh 2:
+```{r}
+mu2<-c(5,10)
+Sig2<-matrix(c(9,16,16,64),nrow = 2)
+eig2 <- eigen(Sig2)
+
+# generate random bvn
+bvn2 <- mvrnorm(500, mu = mu2, Sigma = Sig2 )
+
+plot(bvn2,xlab="X1",ylab="X2")
+points(5,10, pch=3, cex=2, col="blue")
+ellipse(mu2,Sig2,0.95,col="red")
+```
+
+Contoh 3:
+
+Untuk mengecek dua buah titik, apakah ada dalam ellips atau di luar dapat dilakukan dengan cara sebagaimana pada contoh berikut:
+```{r}
+# persamaan ellips
+elips_eq <- function(X,mu,sig){
+  t(X-mu)%*%solve(sig)%*%(X-mu)
+}
+
+# X diketahui
+X1 <- c(10,20)
+X2 <- c(16,20)
+
+# cek titik X1
+cek1 <- elips_eq(X1,mu2,Sig2)
+ifelse(cek1 <= qchisq(0.95,2),"titik di dalam elips", "titik di luar elips")
+
+# cek titik X2
+cek2 <- elips_eq(X2,mu2,Sig2)
+ifelse(cek2 <= qchisq(0.95,2),"titik di dalam elips", "titik di luar elips")
+```
+
+2. Deteksi Outlier dan Multivariate Normal dengan Chi-square plot
+```{r}
+# Data
+Milk <- read_excel("C://Users/ray16/OneDrive/Documents/STIS/Semester_5/APG/Tugas/P3/Milk.xlsx")
+
+# Pastikan kolom sesuai dengan yang ada di file
+x1 <- Milk$BBM
+x2 <- Milk$Perbaikan
+x3 <- Milk$Modal
+
+# Membuat data dalam bentuk matriks
+Milk2 <- cbind(x1, x2, x3) # Cek apakah Milk2 terbentuk dengan benar
+Milk2 <- as.matrix(Milk2)  # Konversi ke matriks jika perlu
+
+# Menghitung dimensi baris dan kolom
+n <- dim(Milk2)[1] # Menghitung dimensi baris
+p <- dim(Milk2)[2] # Menghitung dimensi kolom
+
+# Pastikan dimensi valid
+if (n > 0 && p > 0) {
+  # Langkah pertama hitung vector rata-rata
+  xbar <- apply(Milk2, 2, mean)
+
+  # Hitung Square Generalized Distance
+  d2 <- mahalanobis(Milk2, xbar, cov(Milk2))
+  Dist.order <- sort(d2) # Ordering square distance
+
+  # Quantile chi-square q((j-0.5)/n)
+  Q <- matrix(rep(0, n), n, 1)
+  for (j in 1:n) {
+    Q[j, ] <- qchisq((j - 0.5) / n, df = p)
+  }
+
+  # Chi-square plot
+  scatterplot(Q, Dist.order, grid = FALSE, regLine = FALSE, smooth = FALSE,
+              boxplot = "", pch = 16, xlab = expression(paste(chi[p]^2, " quantile")),
+              ylab = "Ordered distance")
+  abline(a = 0, b = 1, col = "red")
+} else {
+  cat("Data Milk2 tidak valid. Pastikan data terisi dengan benar.\n")
+}
+```
+
+Cek Normalitas Data Multivariate
+```{r}
+# Uji Royston
+UjiRoy <- mvn(Milk[,2:4], mvnTest = "royston")
+UjiRoy
+
+# Uji Mardia
+UjiMar <- mvn(Milk[,2:4], mvnTest = "mardia")
+UjiMar
+```
+Uji Royston (dengan H0 data mengikuti multivariate normal) menunjukkan p − value =0.001011804 < α = 0.05, tolak H0. Kesimpulannya data tidak mengikuti sebaran multivariate normal. Variabel yang menyebabkan data tidak multivariate normal adalah variabel “biaya BBM” dan “biaya Perbaikan”. Demikian pula dengan uji Mardia menunjukkan hal yang sama, data menunjukkan tidak simetris (skew/menceng). Hal ini dapat dilihat dari pengujian hipotesis dengan H0 data simetris ditolak karena p − value =0.00057 < α = 0.05.
+
+3. Transformasi Kenormalan Multivariat
+```{r}
+data("cars")
+plot(cars)
+
+# Cek normalitas secara visual
+summary(cars)
+
+# Create cuts:
+x_c <- cut(cars[,1], 10)
+y_c <- cut(cars[,2], 10)
+
+# Calculate joint counts at cut levels:
+z <- table(x_c, y_c)
+
+# Plot as a 3D histogram:
+hist3D(z=z, border="black")
+
+# Histogram 3D interaktif
+hist3Drgl(z=z, border="black")
+
+# Cek multivariate normality
+mshapiro.test(cars)
+```
+Kita lihat nilai p − value < α = 0.05 artinya hipotesis awal (H0: data berdistribusi multivariate normal) ditolak, atau dengan kata lain dengan tingkat keyakinan 95%, data sampel bukan berasal dari populasi multivariate normal.
+
+Berikutnya kita akan mencari nilai power (λ) dalam power transformation menggunakan function powerTransform dari package car.
+```{r}
+pow <- powerTransform(cars)
+summary(pow)
+```
+Berdasarkan output R (Rounded Pwr), dapat dilihat bahwa variabel “speed” menghasilkan λ = 1, sedangkan variabel “dist” menghasilkan λ = 0.5. Hal ini menunjukkan bahwa variabel “speed” tidak memerlukan transformasi, sedangkan variabel “dist” memerlukan transformasi akar kuadrat.
+
+```{r}
+# Check normality secara marginal
+shapiro.test(cars$speed)
+
+# Check normality secara marginal
+shapiro.test(cars$dist)
+
+# transformasi Boxcox dengan catatan jika lambda=0 maka lakukan
+# transformasi logaritma atau logaritma natural ln
+dist_t <- ((cars$dist^pow$roundlam[2])-1)/ pow$roundlam[2]
+
+# transformasi Tukey, dengan catatan jika lambda bernilai negative 
+# lakukan transformasi -1/(x^lambda)
+speed_t<-cars$speed^pow$roundlam[1]
+
+# Buat data frame baru
+cars_t <- data.frame(speed_t,dist_t)
+
+# Check normality new data
+mshapiro.test(cars_t)
+```
+Berdasarkan hasil uji normalitas terakhir ini, hasil transformasi sudah menunjukkan data menjadi memiliki sebaran normal ganda.

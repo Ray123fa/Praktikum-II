@@ -1,0 +1,239 @@
+---
+title: "Penugasan Praktikum 3"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-14"
+output: word_document
+---
+
+```{r}
+library(rgl) 
+library(plot3D) 
+library(plot3Drgl) 
+library(squash) 
+library(MASS) 
+```
+
+Menentukan Matriks Sigma
+
+```{r}
+
+mu1 <-c(0,2)
+cov12<-0.5*(sqrt(2)*sqrt(1))
+print(cov12)
+sigma<-matrix(c(2,cov12,cov12,1), ncol=2)
+print(round(sigma),2) #output yang muncul adalah output dari pembulatan angka di dalam matriks
+```
+
+Menghitung determinan matriks sigma
+
+```{r}
+det_sigma<-det(sigma)
+det_sigma
+```
+
+Menentukan invers matriks sigma
+
+```{r}
+inv<-solve(sigma)
+print(round(inv),2) #output yang muncul adalah output dari pembulatan angka di dalam matriks
+```
+
+a\. PDF multivariate normal
+
+```{r }
+#function dari pdf bivariate normal
+density<-function(x1,x2){
+  x<-c(x1,x2)
+  pdf<-(1/((2*pi)^(2/2)))*exp(-0.5*(t(x-mu1))%*%inv%*%(x-mu1))
+  print(pdf)
+}
+
+#misalkan x1 dan x2 nya adalah 1 dan 3 maka
+x1<-1
+x2<-3
+value_pdf<-density(x1,x2)
+```
+
+![](1.PNG){width="340"}
+![](2.PNG){width="340"}
+
+b\. Squared generalized distance expression
+
+```{r}
+#function squared generalized distance dengan r studio
+dist<-function(xa,xb){
+  x<-c(xa,xb)
+  gen<-(t(x-mu1))%*%inv%*%(x-mu1)
+  print(gen)
+}
+#misalkan xa adalah 1 dan xb adalah 2
+  xa<-1
+  xb<-2
+  dist(xa,xb)
+```
+
+squared generalized distance
+
+![](3.PNG){width="288"}
+
+c\. Determine (and sketch) the constant-density contour that contains 50% of the
+probability
+
+```{r}
+library(mixtools) 
+#generate random bivariate normal 
+dt_bvn <- mvrnorm(500, mu = mu1, Sigma = sigma)
+plot(dt_bvn,xlab="X1",ylab="X2", xlim=c(-1,1), ylim=c(1,3)) 
+ellipse(mu1, sigma, 0.5, col="red")#garis contour 50% 
+
+```
+
+2.  Cari data PDRB menurut lapangan usaha di Indonesia (pilih minimal 3 lapangan usaha sebagai variabelnya, unit analisis: provinsi, tahun terbaru). Kemudian periksalah apakah data set tersebut berdistribusi multivariate normal atau tidak? Buat pula Chi-square plotnya dan interpretasikan.
+
+```{r}
+library(readxl)
+pdrb<- read_excel("C://Users/ray16/OneDrive/Documents/STIS/Semester_5/APG/Tugas/P3/PDRB ADHB 2023.xlsx", 
+    sheet = "Sheet1")
+View(pdrb)
+```
+
+Hipotesis
+
+H0 : Data berdistribusi multiavariate normal
+
+H1 : Data tidak berstribusi multivariate normal
+
+```{r}
+library(MVN) 
+#uji Royston 
+UjiRoyPdrb <- mvn(pdrb[,2:7], mvnTest = "royston") 
+UjiRoyPdrb 
+```
+
+Menggunakan uji mardia
+
+```{r}
+UjiMarPdrb <- mvn(pdrb[,2:4], mvnTest = "mardia") 
+UjiMarPdrb
+```
+
+Uji Royston (dengan H0 data mengikuti multivariate normal) menunjukkan
+𝑝−𝑣𝑎𝑙𝑢𝑒= 2.297984e-32 \< 𝛼= 0.05, tolak H0. Kesimpulannya data tidak mengikuti sebaran multivariate normal.
+Demikian pula dengan uji Mardia menunjukkan hal yang sama, data menunjukkan tidak simetris (skew/menceng). Hal ini dapat dilihat dari pengujian hipotesis dengan H0 data simetris ditolak karena 𝑝−𝑣𝑎𝑙𝑢𝑒= 2.96422187329089e-25\< 𝛼= 0.05.
+
+```{r}
+library(car) 
+n1<-dim(pdrb)[1]   #menghitung dimensi baris 
+p1<-dim(pdrb)[2]   #menghitung dimensi kolom 
+xbarpdrb<-apply(pdrb[,2:7],2,mean)
+# hitung Square Generalized Distance 
+d2pdrb<-mahalanobis(pdrb[,2:7],xbarpdrb,cov(pdrb[,2:7])) 
+Dist.orderpdrb<-sort(d2pdrb)#ordering square distance 
+#quantile-chisquare q((j-0.5)/n) 
+Q_pdrb<-matrix(rep(0,n1),n1,1) 
+for (j in 1:n1 ){ 
+ Q_pdrb[j,]=qchisq((j-0.5)/n1,df=p1) 
+} 
+# chi-square plot 
+scatterplot(Q_pdrb,Dist.orderpdrb, grid=FALSE,regLine=FALSE,smooth=FALSE, 
+boxplot="",pch=16,xlab= expression(paste(chi[p1]^2, " 
+quantile")),ylab="ordered distance") 
+abline(a=0,b=1,col="red")
+```
+
+Berdasarkan chi-square plotnya, terlihat bahwa data tidak mengikuti multivariate distribusi normal. Hal ini bisa diketahui dari bentuk plotnya yang tidak memiliki pola garis lurus/slope. Selain itu, terdapat outlier yang dapat menyebabkan data tidak berdistribusi multivariate normal.
+
+3.  Diberikan data 10 perusahaan terbesar di dunia berikut ini:
+
+```{r}
+company<-c("Citigroup", "General Electric", "American Intl Group", "Bank of America", "HSBC Group", "ExxonMobil", "Royal Dutch/Shell", "BP", "ING Group", "Toyota Motor")
+x1<-c(108.28,152.36,95.04,65.45,62.97,263.99,265.19,285.06,92.01,165.68)
+x2<-c(17.05,16.59,10.91,14.14,9.52,25.33,18.54,15.73,8.10,11.13)
+x3<-c(1484.10,750.33,766.42,1110.46,1031.29,195.26,193.83,191.11,1175.16,211.15)
+companies<-data.frame(
+  Company=company,
+  Sales_x1=x1,
+  Profits_x2=x2,
+Assets_x3=x3
+)
+companies
+```
+
+a\. Periksalah kenormalan multivariat data tersebut dengan chi-square plot dan pengujian hipotesis, jika tidak normal, lakukan power transformation!
+
+Hipotesis :
+
+H0 : Data berdistribusi Multivariate Normal
+
+H1 : Data tidak berdistribusi Multivariate Normal
+
+```{r}
+library(car) 
+#data 
+Comp<-cbind(x1,x2,x3)#membuat data dalam matrik 
+Comp
+n<-dim(Comp)[1]   #menghitung dimensi baris 
+p<-dim(Comp)[2]   #menghitung dimensi kolom 
+ 
+#langkah pertama hitung vector rata-rata 
+xbar<-apply(Comp,2,mean)
+# hitung Square Generalized Distance 
+d2<-mahalanobis(Comp,xbar,cov(Comp)) 
+Dist.order<-sort(d2)#ordering square distance 
+#quantile-chisquare q((j-0.5)/n) 
+Q<-matrix(rep(0,n),n,1) 
+for (j in 1:n ){ 
+ Q[j,]=qchisq((j-0.5)/n,df=p) 
+} 
+# chi-square plot 
+scatterplot(Q,Dist.order, grid=FALSE,regLine=FALSE,smooth=FALSE, 
+boxplot="",pch=16,xlab= expression(paste(chi[p]^2, " 
+quantile")),ylab="ordered distance") 
+abline(a=0,b=1, col="red") 
+```
+
+Berdasarkan gambar chi-square plot tersebut, meskipun terdapat satu outlier, data menyebar multivariate normal.
+
+Untuk lebih pastinya mari kita lakukan cek normality untuk data multivariate. Ada banyak jenis syntax yang dapat dicoba. Diantaranya adalah package \"MVN\", misalnya dalam modul ini diperkenalkan uji Royston dan uji Mardia.
+
+```{r}
+library(MVN) 
+#uji Royston 
+UjiRoy <- mvn(Comp, mvnTest = "royston") 
+UjiRoy
+```
+
+Uji Royston (dengan H0 data mengikuti multivariate normal) menunjukkan p−𝑣𝑎𝑙𝑢𝑒=0.143 \> 𝛼= 0.05, Gagal Tolak H0. Kesimpulannya data mengikuti sebaran multivariate normal.
+
+b\. Jika ada perusahaan memiliki sales sebesar 230 billions, profits 24 billions, dan assets sebesar 230.5 billions. Apakah perusahaan tersebut berada di dalam atau di luar garis kontur 95%? Jelaskan!
+
+Untuk mengecek sebuah titik apakah ada dalam ellips atau di luar dapat dilakukan dengan cara sebagaimana pada contoh berikut:
+
+```{r}
+#matriks sigma
+var11<-var(Comp[,1])
+var22<-var(Comp[,2])
+var33<-var(Comp[,3])
+cov12<-cov(x1,x2)
+cov13<-cov(x1,x3)
+cov23<-cov(x2,x3)
+sig2<-matrix(c(var11,cov12,cov13,cov12,var22,cov23,cov13,cov23,var33), ncol=3, byrow=F)
+sig2
+
+#persamaan ellips
+mu_1<-mean(Comp[,1])
+mu_2<-mean(Comp[,2])
+mu_3<-mean(Comp[,3])
+muAll<-c(mu_1,mu_2,mu_3)
+elips_eq <- function(X,mu,sig){ 
+t(X-mu)%*%solve(sig2)%*%(X-mu) 
+} 
+
+#X diketahui 
+X1 <- c(230,24,230.5)  
+cek1 <- elips_eq(X1,muAll,sig2) 
+ifelse(cek1 <= qchisq(0.95,3),"Perusahaan berada di dalam garis kontur 95%", 
+"Perusahaan berada di luar garis kontur 95%") 
+```
+
+Berdasarkan output di atas, perusahaan yang memiliki sales sebesar 230 billions, profits 24 billions, dan assets sebesar 230.5 billions berada di dalam garis kontur 95% karena jarak kuadrat titik tersebut masih kurang dari atau sama dengan nilai kuantil chi squarenya.

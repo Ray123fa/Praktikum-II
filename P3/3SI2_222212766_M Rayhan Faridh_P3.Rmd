@@ -142,6 +142,9 @@ if (n > 0 && p > 0) {
 } else {
   cat("Data Milk2 tidak valid. Pastikan data terisi dengan benar.\n")
 }
+
+# hitung uji korelasi antara jarak kuadrat dg kuantil chi-square
+cor.test(Dist.order,Q)
 ```
 
 Cek Normalitas Data Multivariate
@@ -149,7 +152,9 @@ Cek Normalitas Data Multivariate
 # Uji Royston
 UjiRoy <- mvn(Milk[,2:4], mvnTest = "royston")
 UjiRoy
+```
 
+```{r}
 # Uji Mardia
 UjiMar <- mvn(Milk[,2:4], mvnTest = "mardia")
 UjiMar

@@ -1,0 +1,108 @@
+---
+title: "Praktikum 5"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-24"
+output: word_document
+---
+
+Panggil library yang diperlukan
+```{r}
+library(asbio)
+library(DescTools)
+library(haven)
+library(readxl)
+```
+
+**Uji Vektor Rata-rata Berpasangan**
+
+*Siapkan data yang akan digunakan*
+```{r}
+X1 <- c(73,43,47,53,58,47,52,38,61,56,56,34,55,65,75)
+X2 <- c(31,19,22,26,36,30,29,36,34,33,19,19,26,15,18)
+K1 <- cbind(X1,X2)
+K1
+
+Y1 <- c(51,41,43,41,47,32,24,43,53,52,57,44,57,40,68)
+Y2 <- c(35,14,19,29,34,26,19,37,24,27,14,19,30,7,13)
+K2 <- cbind(Y1,Y2)
+K2
+```
+
+*Hitung di masing-masing variabel*
+```{r}
+diff <- K1 - K2
+diff
+```
+
+*Tentukan hipotesis awal*
+```{r}
+muH0 <- c(0,0)
+```
+
+*Lakukan uji statistik*
+```{r}
+HotellingsT2Test(diff, mu = muH0)
+```
+
+
+**Uji Pengukuran Berulang**
+
+*Import data*
+```{r}
+contoh_3 <- read_sav("./Latihan2.sav")
+```
+
+*Masukkan Matriks Contras*
+```{r}
+contrast <- c(-1,1,1,-1,-1,-1,1,1,-1,1,-1,1)
+matriks <- matrix(contrast,3,4)
+matriks
+```
+
+*Cari nilai rata-rata dan matriks kovarians*
+```{r}
+xbar <- apply(contoh_3,2,mean)
+xbar1 <- matrix(xbar,4,1)
+xbar1
+
+sigs <- cov(contoh_3)
+sigs
+```
+
+*Inferensia Vektor Rata-rata dua populasi berulang*
+```{r}
+Test <- 19*(t(matriks%*%xbar1))%*%solve(matriks%*%sigs%*%(t(matriks)))%*%(matriks%*%xbar1)
+Test
+```
+Karena nilai hitung > Ftabel, maka keputusan tolak H0. Jadi dengan tingkat signifikansi 5% maka cukup bukti untuk menyatakan bahwa terdapat minimal ada 1 parameter yang tidak sama dengan 0 atau minimal ada 1 yang perlakuan pada anjing yang berbeda.
+
+
+**Uji Vektor Rata-rata Dua Populasi Independen**
+
+*Import Data*
+```{r}
+contohsoal_1 <- read_excel("./Data3.xlsx")
+```
+
+*Mencari Nilai Vektor pada masing-masing variabel*
+```{r}
+ybar <- apply(contohsoal_1,2,mean)
+ybar
+```
+
+*Mencari Uji kesamaan covarians pada kedua matriks populasi*
+
+```{r}
+a1 <- as.matrix(contohsoal_1[1:32,1:4],nrow=32,ncol=4)
+a2 <- as.matrix(contohsoal_1[1:32,5:8],nrow=32,ncol=4)
+colnames(a2) <- c("x12","x22","x32","x42")
+gabung <- rbind(a1,a2)
+emosi <- factor(c(rep(1,32),rep(2,32)))
+Kullback(gabung,emosi)
+```
+
+*Menggunakan Uji Hotelling*
+```{r}
+HotellingsT2Test(gabung~emosi)
+```
+Karena nilai p-value < 0,05, maka keputusan tolak H0. Yang artinya dengan tingkat signifikansi 5% menunjukkan minimal terdapat satu perbedaan yang signifikan pada tingkat emosi antara laki-laki dan perempuan.

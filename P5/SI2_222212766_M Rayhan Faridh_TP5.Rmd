@@ -1,0 +1,162 @@
+---
+title: "Penugasan Praktikum 5"
+author: "Muhammad Rayhan Faridh"
+date: "2024-10-29"
+output: word_document
+---
+
+Panggil library yang diperlukan
+```{r}
+library(asbio)
+library(DescTools)
+library(readxl)
+```
+
+**1. Uji Vektor rata-rata dua populasi independen **
+
+Diketahui bahwa berbagai aspek siklus ekonomi diukur dari barang-barang konsumsi dan barang produksi, Tintner (1946). Variabelnya adalah
+
+Y1 = panjang siklus
+
+Y2 = persentase kenaikan harga
+
+Y3 = amplitudo siklus
+
+Y4 = laju pertumbuhan
+
+Apakah terdapat perbedaan yang signifikan antara barang konsumsi dengan barang produksi pada siklus ekonomi?
+
+### Hipotesis
+$$ \begin{aligned}
+H_0 : \mu_1 - \mu_2 = 0 \\  
+H_1 : \mu_1 - \mu_2 \neq 0
+\end{aligned}
+$$
+
+### Tingkat Signifikansi
+$$
+\alpha = 0.05
+$$
+
+### Daerah kritis
+$$
+Tolak \ H_0, \ jika \ p-value<0.05
+$$
+
+*Siapkan data*
+```{r}
+data11 <- read_excel("./DataPenugasan5.xlsx", sheet = "Sheet1")
+data12 <- read_excel("./DataPenugasan5.xlsx", sheet = "Sheet2")
+head(data11)
+head(data12)
+
+data11 <- data11[, -1]
+data12 <- data12[, -1]
+```
+
+*Cari nilai vektor pada masing-masing variabel*
+```{r}
+# Hitung rata-rata setiap kolom
+ybarKonsumsi = apply(data11, 2, mean)
+ybarProduksi = apply(data12, 2, mean)
+
+ybarKonsumsi
+ybarProduksi
+```
+
+*Uji kesamaan covarians pada kedua matriks populasi*
+```{r}
+a1 <- as.matrix(data11[1:9,1:4], nrow = 9, ncol = 4)
+a2 <- as.matrix(data12[1:10,1:4],nrow = 10, ncol = 4)
+
+colnames(a1) <- c("Y11","Y12","Y13","Y14")
+colnames(a2) <- c("Y21","Y22","Y23","Y24")
+
+gabung <- rbind(a1,a2)
+jenis <- factor(c(rep(1,9),rep(2,10)))
+
+Kullback(gabung,jenis)
+```
+Diperoleh dari uji kesamaan varians bahwa $P(Chi>Chi^*)$ kurang dari nilai $1-\alpha = 0.95$. Sehingga dapat dikatakan bahwa $\sum_1 = \sum_2$ (varians kedua populasi tersebut sama)
+
+*Uji Hotelling*
+```{r}
+HotellingsT2Test(gabung~jenis)
+```
+
+*Kesimpulan*
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti bahwa minimal terdapat satu perbedaan yang signifikan antara barang konsumsi dan produksi pada siklus ekonomi. atau Berdasarkan tingkat signifikansi 5%, sudah cukup bukti untuk menunjukkan bahwa ada perbedaan yang signifikan antara barang konsumsi dan produksi pada siklus ekonomi.
+
+
+**2. Uji perbedaan rata-rata berpasangan**
+
+Terdapat 15 mahasiswa diberi tugas untuk membuat essay yang bersifat formal dan informal. Kemudian terdapat variabel-variabel yang dapat menentukan apakah essay tersebut baik atau tidak. 
+
+Y1= jumlah kata pada essay informal
+
+Y2= jumlah kata kerja pada essay informal
+
+X1= jumlah kata pada essay formal
+
+X2= jumlah kata pada essay formal
+
+Berdasarkan data, apakah antara kedua jenis essay tersebut memiliki kualitas yang baik atau tidak?
+
+### Hipotesis
+$$ \begin{aligned}
+H_0 : \mu_d = 0 \\ 
+H_1 : \mu_d \neq 0
+\end{aligned}
+$$
+
+*Siapkan data*
+```{r}
+data3 <- read_excel("./DataPenugasan5.xlsx", sheet = "Sheet5")
+head(data3)
+
+data3 <- data3[, -1]
+```
+
+*Masukkan Matriks Contrast*
+```{r}
+contrast <- c(1,-1,1,0,0,1,1,-1,-1,0,0,-1)
+matriks <- matrix(contrast, nrow = 3, ncol = 4, byrow = T)
+matriks
+```
+
+*Cari nilai rata-rata dan matriks kovarians*
+```{r}
+xbar <- apply(data3,2,mean)
+xbar1 <- matrix(xbar, nrow = 4, ncol = 1)
+xbar1
+```
+
+*Matriks kovarians*
+```{r}
+sigs=cov(data3)
+sigs
+```
+
+*Inferensia vector rata-rata dua populasi berulang*
+```{r}
+p <- ncol(data3[,-1])
+n <- nrow(data3)
+
+# Titik kritis
+alpha <- 0.05
+crit <- ((n-1)*(p-1)/(n-p+1)) * qf(1-alpha, df1 = p-1, df2 = n-p+1)
+crit
+
+Test=n*(t(matriks%*%xbar1))%*%solve(matriks%*%sigs%*%(t(matriks)))%*%(matriks%*%xbar1)
+Test
+```
+
+*Keputusan*
+$$
+Tolak \ H_0, \ karena \ T^*>9,269
+$$
+
+*Kesimpulan*
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa terdapat minimal ada satu ketebalan kulit pohon pada arah mata angin yang berbeda. Dengan kata lain, terdapat perbedaan pada setiap pengulangan pengambilan bor gabus kayu secara signifikan.

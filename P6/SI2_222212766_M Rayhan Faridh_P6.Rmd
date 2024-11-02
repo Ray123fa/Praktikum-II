@@ -1,0 +1,239 @@
+---
+title: "Praktikum 6"
+subtitle: "MULTIVARIATE ANALYSIS OF VARIANCE (MANOVA) ONE WAY"
+author: "3SI2 APG Kelompok 4"
+date: "2024-10-31"
+output: word_document
+---
+
+# MODUL 5 MULTIVARIATE ANALYSIS OF VARIANCE (MANOVA) ONE WAY
+
+## 5.4. Kegiatan Praktikum
+
+### 3. Balanced One-way Manova
+
+#### Contoh 1
+
+Baten, Tack, and Baeder (1958) compared judges' scores on fish prepared by three methods. Twelve fish were cooked by each method, and several judges tasted fish samples and rated each on four variables: y1 = aroma, y2 = flavor, y3 = texture, and y4 = moisture. The data are in Table next page. Each entry is an average score for the judges on that fish.
+
+Do a Wilk's Λ Test to find effect of three methods to all variables was exist!
+
+**JAWAB**
+
+```{r}
+#import data
+fish_score<-read.csv("Latihan6_1.csv")
+fish_score
+```
+
+```{r}
+#uji kesamaan matriks kovarians
+#install.packages("biotools")
+library(biotools) #aktifkan package asbio
+boxM(fish_score[,1:4],fish_score[,5])
+```
+
+Terlihat p-value = 0,8567 \> 0,05, maka kita gagal tolak H0 berarti ada matriks kovarians ketiga metode sama, sehingga kita bisa melanjutkan uji Manova.
+
+```{r}
+library(mvnormtest)
+#uji multivariate normal
+matU<-as.matrix(t(fish_score[1:12,-5]))
+mshapiro.test(matU)
+matU<-as.matrix(t(fish_score[13:24,-5]))
+mshapiro.test(matU)
+matU<-as.matrix(t(fish_score[25:36,-5]))
+mshapiro.test(matU)
+
+```
+
+Terlihat bahwa asumsi kenormalan tidak terpenuhi, namun pada contoh ini kita anggap terpenuhi.
+
+```{r}
+#Manova test
+MetRes<-manova(cbind(y1,y2,y3,y4) ~ method, data=fish_score)
+summary(MetRes, test="Wilks")
+```
+
+Kesimpulan: Hipotesis:
+
+H0 : μ1 = μ2 = μ3
+
+H1 : Terdapat metode dengan vektor mean berbeda
+
+Dari output terlihat bahwa P-value \< (α = 0.05), sehingga H0 kita tolak.
+
+#### Contoh 2
+
+Misal diberikan data berikut:
+
+Lakukan uji untuk melihat apakah terdapat perbedaan signifikan antar perlakuan!
+
+Pengerjaan:
+
+```{r}
+library(readxl)
+data2 <- read_excel("Latihan6_2.xlsx")
+data2 <- as.data.frame(data2)
+data2
+
+
+```
+
+```{r}
+n1 <- 3
+n2 <- 2
+n3 <- 3
+n <- 8
+k <- 3
+p <- 2
+ybar <- cbind(colMeans(data2[,1:2]))
+
+#Mencari matriks H
+treatment1 <- as.matrix(data2[1:3,1:2])
+treatment2 <- as.matrix(data2[4:5,1:2])
+treatment3 <- as.matrix(data2[6:8,1:2])
+
+#Mencari jumlah
+y1_ <- cbind(colSums(treatment1))
+y2_ <- cbind(colSums(treatment2))
+y3_ <- cbind(colSums(treatment3))
+
+#Mencari rata-rata
+ybar1 <- cbind(colMeans(treatment1))
+ybar2 <- cbind(colMeans(treatment2))
+ybar3 <- cbind(colMeans(treatment3))
+
+ybar1
+ybar2
+ybar3
+
+#Mencari Matriks H
+#Menggunakan rata-rata
+#H <- (n1*ybar1%*%t(ybar1)) + (n2*ybar2%*%t(ybar2)) + (n3*ybar3%*%t(ybar3)) - (n*ybar%*%t(ybar))
+
+#Menggunakan Sum
+H <- (1/n1*y1_%*%t(y1_)) + (1/n2*y2_%*%t(y2_)) + (1/n3*y3_%*%t(y3_)) - (n*ybar%*%t(ybar))
+H
+```
+
+```{r}
+y <- as.matrix(data2[, 1:2])
+
+#Mencari Matriks T
+T <- t(y)%*%y - (n*ybar%*%t(ybar))
+T
+```
+
+```{r}
+#Mencari matriks E
+E <- T - H
+E
+```
+
+```{r}
+lamda <- det(E)/det(E+H)
+lamda
+```
+
+Keputusan :
+
+1.  Dari table Lower Critical Values of Wilks Λ, dengan α = .01, dimana p = 2, vH = 2, dan vE = 5, kita peroleh:
+
+    Λ0.01,2,2,5 = 0,056
+
+    Sehingga kita tolak H0
+
+2.  Atau kita konversikan nilai Λ ke dalam F dimana p =2 dan k = 3 sebagai berikut:
+
+    ```{r}
+    ve <- 5
+    vh <- 2
+    konversi <- (1-sqrt(lamda))/sqrt(lamda)*(ve-1)/vh
+    konversi
+    ```
+
+    F-tabel dengan v1 = 2(k --- 1) = 4 and v2 = 2(∑ni - k - 1) = 8 → F4,8(0.01) = 7.01. Karena 8.19 \> F4,8(0.01) = 7.01, kita tolak H0 pada α = .01 dan menyimpulkan bahwa terdapat perbedaan akibat treatment berbeda.
+
+```{r}
+# Menghitung selisih rata-rata antar perlakuan untuk Bonferroni Correction
+e11<-E[1,1]
+e22<-E[2,2]
+# Selisih rata-rata antara perlakuan 1 dan 2
+selisih1_2 <- ybar1 - ybar2
+# Selisih rata-rata antara perlakuan 1 dan 3
+selisih1_3 <- ybar1 - ybar3
+# Selisih rata-rata antara perlakuan 2 dan 3
+selisih2_3 <- ybar2 - ybar3
+
+# Nilai Bonferroni Correction
+alpha <- 0.05
+new_alpha <- alpha / (p * k * (k - 1)) # sesuai jumlah perbandingan
+
+# Menghitung interval kepercayaan untuk perbedaan rata-rata pada variabel pertama (e11)
+# Untuk (μ11 - μ21)
+Lbound1_2_var1 <- selisih1_2[1] - qt(1 - new_alpha, df = n - k) * sqrt(((1 / n1) + (1 / n2)) * e11 / (n - k))
+Ubound1_2_var1 <- selisih1_2[1] + qt(1 - new_alpha, df = n - k) * sqrt(((1 / n1 + 1 / n2)) * e11 / (n - k))
+
+# Untuk (μ11 - μ31)
+Lbound1_3_var1 <- selisih1_3[1] - qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n3) * e11 / (n - k))
+Ubound1_3_var1 <- selisih1_3[1] + qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n3) * e11 / (n - k))
+
+# Untuk (μ21 - μ31)
+Lbound2_3_var1 <- selisih2_3[1] - qt(1 - new_alpha, df = n - k) * sqrt((1 / n2 + 1 / n3) * e11 / (n - k))
+Ubound2_3_var1 <- selisih2_3[1] + qt(1 - new_alpha, df = n - k) * sqrt((1 / n2 + 1 / n3) * e11 / (n - k))
+
+# Menghitung interval kepercayaan untuk perbedaan rata-rata pada variabel kedua (e22)
+# Untuk (μ12 - μ22)
+Lbound1_2_var2 <- selisih1_2[2] - qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n2) * e22 / (n - k))
+Ubound1_2_var2 <- selisih1_2[2] + qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n2) * e22 / (n - k))
+
+# Untuk (μ12 - μ32)
+Lbound1_3_var2 <- selisih1_3[2] - qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n3) * e22 / (n - k))
+Ubound1_3_var2 <- selisih1_3[2] + qt(1 - new_alpha, df = n - k) * sqrt((1 / n1 + 1 / n3) * e22 / (n - k))
+
+# Untuk (μ22 - μ32)
+Lbound2_3_var2 <- selisih2_3[2] - qt(1 - new_alpha, df = n - k) * sqrt((1 / n2 + 1 / n3) * e22 / (n - k))
+Ubound2_3_var2 <- selisih2_3[2] + qt(1 - new_alpha, df = n - k) * sqrt((1 / n2 + 1 / n3) * e22 / (n - k))
+
+```
+
+Dengan tingkat kepercayaan 95%, interval Bonferroni untuk perbedaan rata-rata adalah sebagai berikut:
+
+- **Untuk variabel pertama**:
+  - Untuk perbedaan rata-rata \( (\mu_{11} - \mu_{21}) \):
+    \[
+    `r Lbound1_2_var1` \leq \mu_{11} - \mu_{21} \leq `r Ubound1_2_var1`
+    \]
+    Hal ini menunjukkan bahwa dengan tingkat kepercayaan 95%, perbedaan rata-rata antara perlakuan 1 dan perlakuan 2 berada dalam interval 1.5529 hingga 12.4471, yang tidak mencakup nol, sehingga menunjukkan adanya perbedaan signifikan.
+    
+  - Untuk perbedaan rata-rata \( (\mu_{11} - \mu_{31}) \):
+    \[
+    `r Lbound1_3_var1` \leq \mu_{11} - \mu_{31} \leq `r Ubound1_3_var1`
+    \]
+    Interval ini juga tidak mencakup nol, menandakan bahwa terdapat perbedaan signifikan antara perlakuan 1 dan perlakuan 3.
+    
+  - Untuk perbedaan rata-rata \( (\mu_{21} - \mu_{31}) \):
+    \[
+    `r Lbound2_3_var1` \leq \mu_{21} - \mu_{31} \leq `r Ubound2_3_var1`
+    \]
+    Interval ini mencakup nol, yang mengindikasikan bahwa tidak ada perbedaan signifikan antara perlakuan 2 dan perlakuan 3.
+
+- **Untuk variabel kedua**:
+  - Untuk perbedaan rata-rata \( (\mu_{12} - \mu_{22}) \):
+    \[
+    `r Lbound1_2_var2` \leq \mu_{12} - \mu_{22} \leq `r Ubound1_2_var2`
+    \]
+    Interval ini mencakup nol, menunjukkan bahwa tidak terdapat perbedaan signifikan antara perlakuan 1 dan perlakuan 2.
+    
+  - Untuk perbedaan rata-rata \( (\mu_{12} - \mu_{32}) \):
+    \[
+    `r Lbound1_3_var2` \leq \mu_{12} - \mu_{32} \leq `r Ubound1_3_var2`
+    \]
+    Interval ini mencakup nol, menandakan tidak ada perbedaan signifikan antara perlakuan 1 dan perlakuan 3.
+    
+  - Untuk perbedaan rata-rata \( (\mu_{22} - \mu_{32}) \):
+    \[
+    `r Lbound2_3_var2` \leq \mu_{22} - \mu_{32} \leq `r Ubound2_3_var2`
+    \]
+    Interval ini juga mencakup nol, yang menunjukkan bahwa tidak ada perbedaan signifikan antara perlakuan 2 dan perlakuan 3.

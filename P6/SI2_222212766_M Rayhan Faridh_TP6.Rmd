@@ -1,0 +1,224 @@
+---
+title: "Penugasan Praktikum 6"
+author: "Muhammad Rayhan Faridh"
+date: "2024-11-05"
+output: word_document
+---
+
+Panggil library yang diperlukan
+```{r}
+library(mvnormtest)
+library(biotools)
+library(dplyr)
+library(mvnormalTest)
+```
+
+# Nomor 1
+
+Jagung jenis baru tengah dikembangkan dan sekelompok tim agronomis ingin menentukan apakah terdapat perbedaan signifikan antara jenis (tanah loam, sandy, clay) dalam hal hasil panen, jumlah air yang dibutuhkan, dan herbisida yang dibutuhkan. Untuk tujuan analisis, setiap jenis tanah masing-masing diambil 8 petak lahan jagung sebagai sampel. Data hasil pencatatan diberikan sebagai berikut.
+
+```{r}
+jagung = read.csv("./data_penugasan_6.csv", sep = ";")
+jagung
+```
+
+Apakah terdapat perbedaan signifikan antara jenis (tanah loam, sandy, clay) dalam hal hasil panen, jumlah air yang dibutuhkan, dan herbisida yang dibutuhkan? Jika terdapat perbedaan, pada variable manakah terdapat perbedaan tersebut.
+
+# Pembahasan
+
+### Uji Kesamaan Matriks Kovarians
+
+```{r}
+boxM(jagung[,-1],jagung[,1])
+```
+
+Didapatkan p-value = 0.8746 yang berarti keputusannya gagal tolak H0 karena p-value \> 0.05
+
+Kesimpulan: Dengan tingkat signifikansi 5%, tidak terdapat cukup bukti untuk menyatakan bahwa terdapat perbedaan antara matriks kovarians dari ketiga jenis tanah yang digunakan pada jagung tersebut. Artinya, asumsi kesamaan matriks kovarians terpenuhi.
+
+### Uji Kenormalan Multivariat
+
+```{r}
+matU<-as.matrix(t(jagung[1:8,-1]))
+mshapiro.test(matU)
+```
+
+```{r}
+matU<-as.matrix(t(jagung[9:16,-1]))
+mshapiro.test(matU)
+```
+
+```{r}
+matU<-as.matrix(t(jagung[17:24,-1]))
+mshapiro.test(matU)
+```
+
+```{r}
+mardia(matU)$mv.test
+```
+
+Pada uji Shapiro Wilk Multivariat, diperoleh untuk jenis tanah loam dan sandy $p-value > 0.05$ sehingga didapatkan kesimpulan bahwa data untuk jenis tanah loam dan sandy berdistribusi multivariat normal. Sedangkan untuk jenis tanah clay, diperoleh $p-value < 0.05$ sehingga didapatkan kesimpulan bahwa data untuk jenis tanah clay tidak berdistribusi multivariat normal.
+
+Dengan menggunakan uji lain, yakni Uji Mardia yang dilakukan pada jenis tanah clay, diperoleh $p-value \ kurtosis \  dan \ p-value \ skewness > 0.05$ sehingga didapatkan kesimpulan bahwa untuk jenis tanah clay berdistribusi multivariat normal.
+
+### Uji MANOVA
+#### Hipotesis
+
+$$\begin{gathered} H_0 : \mu_1 = \mu_2 = \mu_3 \\ H_1 : minimal \ terdapat \ sepasang \ \mu_i \ yang \ berbeda, \ i=1,2,3 \end{gathered}$$
+
+#### Tingkat signifikansi
+
+$$
+\alpha=0.05
+$$
+
+#### Daerah kritis
+
+$$
+Tolak \ H_0 \ jika \ p-value \ < \ 0.05
+$$
+
+#### Statistik hitung
+
+```{r}
+#Manova test
+MetRes<-manova(cbind(yield, water, herbicide) ~ jtanah, data=jagung)
+summary(MetRes, test="Wilks")
+```
+
+Didapatkan $p-value=0.0059$
+
+#### Keputusan
+
+$$
+Tolak \ H_0 \ karena \ p-value \ < \ 0.05
+$$
+
+#### Kesimpulan
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa terdapat perbedaan vektor rata-rata pada jenis tanah yang digunakan pada jagung. Untuk mengetahui variabel dan pasangan jenis tanah yang memiliki perbedaan, dapat dilihat dari Simultaneous Confidence Intervalnya.
+
+### Simultaneous Confidence Interval
+```{r}
+#alpha yang baru
+nalpha = 0.05/(3*3*2)
+
+#mencari matriks W
+X = cbind(jagung$yield, jagung$water, jagung$herbicide)
+
+rerata = jagung %>%
+          group_by(jtanah) %>%
+          summarise(yield = mean(yield),
+                    water = mean(water),
+                    herbicide = mean(herbicide))
+
+Xbar_l = matrix(c(rep(rerata$yield[2],8), rep(rerata$yield[3],8), rep(rerata$yield[1],8),
+       c(rep(rerata$water[2],8), rep(rerata$water[3],8), rep(rerata$water[1],8),
+       c(rep(rerata$herbicide[2],8), rep(rerata$herbicide[3],8), rep(rerata$herbicide[1],8)))), ncol=3)
+
+E = X - Xbar_l
+W = t(E) %*% E
+```
+
+95% Simultan CI Untuk variabel hasil panen (yield)
+
+```{r}
+#Untuk variabel hasil panen (yield)
+#loam - sandy
+#Hitung lower bound
+Lbound12_1<-(rerata$yield[2] - rerata$yield[3])-qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound12_1<-(rerata$yield[2] - rerata$yield[3])+qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+
+#loam - clay
+#Hitung lower bound
+Lbound13_1<-(rerata$yield[2] - rerata$yield[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound13_1<-(rerata$yield[2] - rerata$yield[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+
+# sandy - clay
+#Hitung lower bound
+Lbound23_1<-(rerata$yield[3] - rerata$yield[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound23_1<-(rerata$yield[3] - rerata$yield[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[1,1]/(24-3) * ((1/8)+ (1/8)))
+
+cat("95% Simultaneous confidence interval untuk variabel hasil panen (yield):\n \n",
+    Lbound12_1," < mu11 - mu21 < ",Ubound12_1,"\n",
+    Lbound13_1," < mu11 - mu31 < ",Ubound13_1,"\n",
+    Lbound23_1," < mu21 - mu31 < ",Ubound23_1,"\n")
+```
+
+95% Simultan CI Untuk variabel jumlah air yang dibutuhkan (water)
+
+```{r}
+#Untuk variabel jumlah air yang dibutuhkan (water)
+#loam - sandy
+#Hitung lower bound
+Lbound12_2<-(rerata$water[2] - rerata$water[3])-qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound12_2<-(rerata$water[2] - rerata$water[3])+qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+
+#loam - clay
+#Hitung lower bound
+Lbound13_2<-(rerata$water[2] - rerata$water[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound13_2<-(rerata$water[2] - rerata$water[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+
+# sandy - clay
+#Hitung lower bound
+Lbound23_2<-(rerata$water[3] - rerata$water[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound23_2<-(rerata$water[3] - rerata$water[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[2,2]/(24-3) * ((1/8)+ (1/8)))
+
+cat("95% Simultaneous confidence interval untuk variabel jumlah air yang dibutuhkan (water):\n \n",
+    Lbound12_2," < mu12 - mu22 < ",Ubound12_2,"\n",
+    Lbound13_2," < mu12 - mu32 < ",Ubound13_2,"\n",
+    Lbound23_2," < mu22 - mu32 < ",Ubound23_2,"\n")
+```
+
+95% Simultan CI Untuk variabel herbisida yang dibutuhkan (herbicide)
+
+```{r}
+#Untuk variabel herbisida yang dibutuhkan (herbicide)
+#loam - sandy
+#Hitung lower bound
+Lbound12_3<-(rerata$herbicide[2] - rerata$herbicide[3])-qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound12_3<-(rerata$herbicide[2] - rerata$herbicide[3])+qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+
+#loam - clay
+#Hitung lower bound
+Lbound13_3<-(rerata$herbicide[2] - rerata$herbicide[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound13_3<-(rerata$herbicide[2] - rerata$herbicide[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+
+# sandy - clay
+#Hitung lower bound
+Lbound23_3<-(rerata$herbicide[3] - rerata$herbicide[1])-qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+#Hitung upperbound
+Ubound23_3<-(rerata$herbicide[3] - rerata$herbicide[1])+qt((1-nalpha), df=24-3)*
+  sqrt(W[3,3]/(24-3) * ((1/8)+ (1/8)))
+
+cat("95% Simultaneous confidence interval untuk variabel herbisida yang dibutuhkan (herbicide):\n \n",
+    Lbound12_3," < mu13 - mu23 < ",Ubound12_3,"\n",
+    Lbound13_3," < mu13 - mu33 < ",Ubound13_3,"\n",
+    Lbound23_3," < mu23 - mu33 < ",Ubound23_3,"\n")
+```
+
+Dari hasil yang diperoleh, tampak bahwa semua pasangan jenis tanah pada masing-masing variabel melewati titik nol, yang artinya bahwa tidak ada perbedaan yang signifikan pada rata-rata masing-masing variabel di setiap pasangan jenis tanah. Hal ini bertentangan dengan hasil yang diperoleh pada uji MANOVA sebelumnya yang menghasilkan kesimpulan bahwa terdapat perbedaan vektor rata-rata pada jenis tanah yang digunakan.

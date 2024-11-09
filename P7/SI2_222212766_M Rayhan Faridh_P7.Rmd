@@ -1,0 +1,299 @@
+---
+title: "Praktikum 7"
+author: "Muhammad Rayhan Faridh"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+data_lat <- read.csv("./data_p7.csv")
+library(biotools)
+```
+
+# **Uji Asumsi Homogenitas Matriks Kovarians**
+
+```{r}
+boxM(cbind(data_lat$y1,data_lat$y2),data_lat$faktorA)
+```
+
+## **Faktor A**
+
+p-value = 0.02305
+
+alpha = 0.05
+
+### **Keputusan :**
+
+Karena p-value = 0.02305 \< alpha = 0.05 maka keputusannya adalah tolak H0
+
+### **Kesimpulan :**
+
+Dengan tingkat signifikansi 5% dan pada jumlah sampel yang digunakan cukup bukti untuk menyatakan bahwa minimal terdapat satu matriks kovarians yang berbeda. Namun, pada kasus ini (populasi faktor A) dianggap memenuhi asumsi homogenitas agar dapat melanjutkan uji MANOVA.
+
+```{r}
+boxM(cbind(data_lat$y1,data_lat$y2),data_lat$faktorB)
+```
+
+## **Faktor B**
+
+p-value = 0.42
+
+alpha = 0.05
+
+### **Keputusan :**
+
+Karena p-value = 0.42 \> alpha = 0.05 maka keputusannya adalah gagal tolak H0
+
+### **Kesimpulan :**
+
+Dengan tingkat signifikansi 5% dan pada jumlah sampel yang digunakan belum cukup bukti untuk menyatakan bahwa minimal terdapat satu matriks kovarians yang berbeda.
+
+```{r}
+boxM(cbind(data_lat$y1,data_lat$y2),paste(data_lat$faktorA, data_lat$faktorB))
+```
+
+## **Faktor A dan Faktor B**
+
+p-value = 0.2495
+
+alpha = 0.05
+
+### **Keputusan :**
+
+Karena p-value = 0.2495 \> alpha = 0.05 maka keputusannya adalah gagal tolak H0
+
+### **Kesimpulan :**
+
+Dengan tingkat signifikansi 5% dan pada jumlah sampel yang digunakan belum cukup bukti untuk menyatakan bahwa minimal terdapat satu matriks kovarians yang berbeda.
+
+Pada kasus diatas masih terdapat pelanggaran jika alfa=5% , tetapi jika menggunakan alfa =1% terpenuhi
+
+# **Uji Asumsi Multivariat Normal**
+
+## **Hipotesis**
+
+Ho: Data berditribusi normal multivariat
+
+H1: Data tidak berditribusi normal multivariat
+
+```{r}
+# Memuat paket RVAideMemoire untuk uji Shapiro-Wilk multivariat
+library(RVAideMemoire)
+```
+
+```{r}
+mshapiro.test(data_lat[data_lat$faktorA=="A1", -c(3,4)])
+mshapiro.test(data_lat[data_lat$faktorA=="A2", -c(3,4)])
+```
+
+## **Faktor A**
+
+A1 p-value = 0.04246 (Tolak H0)
+
+A2 p-value = 0.3014 (Gagal Tolak H0)
+
+```{r}
+mshapiro.test(data_lat[data_lat$faktorB=="B1", -c(3,4)])
+mshapiro.test(data_lat[data_lat$faktorB=="B2", -c(3,4)])
+mshapiro.test(data_lat[data_lat$faktorB=="B3", -c(3,4)])
+mshapiro.test(data_lat[data_lat$faktorB=="B4", -c(3,4)])
+```
+
+## **Faktor B**
+
+B1 p-value = 0.04857 (Tolak H0)
+
+B2 p-value = 0.4141 (Gagal Tolak H0)
+
+B3 p-value = 0.02964 (Tolak HO)
+
+B4 p-value = 0.3553 (Gagal Tolak H0)
+
+Pada contoh ini tidak semua faktor p-value \> alpha, yang artinya pada beberapa populasi data tidak berdistribusi normal multivariat. Namun, pada kasus ini dianggap memenuhi asumsi normal multivariat agar dapat melanjutkan uji MANOVA.
+
+Pada kasus diatas masih terdapat pelanggaran jika alfa=5% , tetapi jika menggunakan alfa =1% terpenuhi
+
+# **UJI MANOVA TWO WAY**
+
+## **Tanpa Interaksi**
+
+## **Hipotesis**
+
+## **Faktor A**
+
+Ho: Tidak terdapat efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+H1: Minimal terdapat satu efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+## **Faktor B**
+
+Ho: Tidak terdapat efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+H1: Minimal terdapat satu efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+```{r}
+##Tanpa Interaksi
+#Manova test
+result <- manova(cbind(y1,y2) ~ faktorA + faktorB,data=data_lat)
+summary(result, test="Wilks")
+```
+
+## **Keputusan**
+
+**Faktor A**
+
+karena P-value =(9.251e-05) \< alpha=(0.05) maka tolak Ho
+
+**Faktor B**
+
+karena P-value =(0.1314) \> alpha=(0.05) maka gagal tolak Ho
+
+## **Kesimpulan**
+
+**Faktor A**
+
+Dengan tingkat signfikansi 5% dan dengan sampel yang ada cukup bukti untuk menunjukkan bahwa minimal terdapat satu efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+**Faktor B**
+
+Dengan tingkat signfikansi 5% dan dengan sampel yang ada belum terdapat cukup bukti untuk menunjukkan bahwa minimal terdapat satu efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+## **Dengan Interaksi**
+
+## **Hipotesis**
+
+## **Faktor A**
+
+Ho: Tidak terdapat efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+H1: Minimal terdapat satu efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+## **Faktor B**
+
+Ho: Tidak terdapat efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+H1: Minimal terdapat satu efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+## **Faktor A dan Faktor B (Interaksi)**
+
+Ho: Tidak terdapat efek interaksi dari perlakuan dari 2 jenis kecepatan rotasi yakni lambat dan cepat dengan 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+H1: Minimal terdapat satu efek interaksi dari perlakuan dari 2 jenis kecepatan rotasi yakni lambat dan cepat dengan 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+```{r}
+## Dengan Interaksi
+# Manova test
+result <- manova(cbind(y1,y2) ~ faktorA * faktorB,data=data_lat)
+summary(result, test="Wilks")
+```
+
+### **Wilayah Penolakkan**
+
+Tolak Ho jika p-value \< alpha atau F hitung \> F tabel
+
+### **Keputusan**
+
+**Faktor A**
+
+karena P-value =(0,0001867) \< alpha=(0.05) maka tolak Ho
+
+**Faktor B**
+
+karena P-value =(0,1827862) \> alpha=(0.05) maka gagal tolak Ho
+
+**Faktor interaksi**
+
+karena P-value =(0,9458304) \> alpha=(0.05) maka gagal tolak Ho
+
+### **Kesimpulan**
+
+**Faktor A**
+
+Dengan tingkat signfikansi 5% dan dengan sampel yang terdapat cukup bukti untuk menunjukkan bahwa minimal terdapat satu efek perlakuan dari setiap kecepatan rotasi yakni lambat dan cepat pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+**Faktor B**
+
+Dengan tingkat signfikansi 5% dan dengan sampel yang ada belum cukup bukti untuk menunjukkan bahwa minimal terdapat satu efek perlakuan dari 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+**Faktor interaksi**
+
+Dengan tingkat signfikansi 5% dan dengan sampel yang ada belum terdapat cukup bukti untuk menunjukkan bahwa minimal terdapat satu efek interaksi dari perlakuan dari jenis kecepatan rotasi yakni lambat dan cepat dengan 4 jenis pelumah B1,B2,B3 dan B4 pada setiap potongan baja yakni ultimate torque dan ultimate strain
+
+Kita akan melakukan ANOVA univariat untuk setiap variabel dependen (y1 dan y2) untuk melihat efek Faktor A dan menentukan variabel dependen mana yang berkontribusi pada hasil MANOVA yang signifikan.
+
+```{r}
+# Melakukan ANOVA univariat untuk y1
+anova_y1 <- aov(y1 ~ faktorA * faktorB, data = data_lat)
+summary(anova_y1)
+
+# Melakukan ANOVA univariat untuk y2
+anova_y2 <- aov(y2 ~ faktorA * faktorB, data = data_lat)
+summary(anova_y2)
+```
+
+Karena Faktor A signifikan dan memiliki dua level (A1 dan A2), kita akan melakukan uji t untuk perbedaan rata-rata antara A1 dan A2 dengan penyesuaian Bonferroni. Kita akan menghitung interval kepercayaan simultan 95% dengan penyesuaian Bonferroni.
+
+```{r}
+# Memastikan paket emmeans terinstal dan dimuat
+if (!require(emmeans)) {
+    install.packages("emmeans")
+}
+library(emmeans)
+```
+
+## **Analisis untuk y1 (Ultimate Torque)**
+
+```{r}
+# Menghitung rata-rata marginal terestimasi untuk faktorA
+emm_y1 <- emmeans(anova_y1, ~ faktorA)
+
+# Melakukan perbandingan pasangan dengan penyesuaian Bonferroni
+kontras_y1 <- pairs(emm_y1, adjust = "bonferroni")
+
+# Menampilkan hasil dan interval kepercayaan simultan
+summary(kontras_y1, infer = TRUE)
+
+```
+
+### Interpretasi:
+
+**Estimasi Perbedaan Rata-rata:** Rata-rata pada A1 lebih rendah 0.388 unit dibandingkan A2.
+
+**Nilai p yang Disesuaikan:** 0.0229 (lebih kecil dari 0.05), menunjukkan perbedaan signifikan setelah penyesuaian Bonferroni.
+
+**Interval Kepercayaan Simultan 95%:** Dari 0.0585 hingga 0.0718, tidak mencakup nol, mengindikasikan perbedaan signifikan.
+
+### Kesimpulan untuk y1:
+
+Dengan tingkat signifikansi 5% dan menggunakan penyesuaian Bonferroni, terdapat perbedaan yang signifikan dalam Ultimate Torque antara level A1 dan A2. Rata-rata pada A2 lebih tinggi daripada A1.
+
+## **Analisis untuk y2 (Ultimate Strain)**
+
+```{r}
+# Menghitung rata-rata marginal terestimasi untuk faktorA
+emm_y2 <- emmeans(anova_y2, ~ faktorA)
+
+# Melakukan perbandingan pasangan dengan penyesuaian Bonferroni
+kontras_y2 <- pairs(emm_y2, adjust = "bonferroni")
+
+# Menampilkan hasil dan interval kepercayaan simultan
+summary(kontras_y2, infer = TRUE)
+
+```
+
+### Interpretasi:
+
+**Estimasi Perbedaan Rata-rata:** Rata-rata pada A1 lebih tinggi 8.76 unit dibandingkan A2.
+
+**Nilai p yang Disesuaikan:** 0.0002 (lebih kecil dari 0.05), menunjukkan perbedaan perbedaan signifikan setelah penyesuaian Bonferroni.
+
+**Interval Kepercayaan Simultan 95%:** Dari 4.72 hingga 12.8, tidak mencakup nol, mengindikasikan perbedaan signifikan.
+
+### Kesimpulan untuk y2:
+
+Dengan tingkat signifikansi 5% dan menggunakan penyesuaian Bonferroni, terdapat perbedaan yang sangat signifikan dalam Ultimate Strain antara level A1 dan A2.

@@ -1,0 +1,487 @@
+---
+title: "Penugasan Praktikum 9"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-14"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+File SAQ8.sav adalah file berisi data hasil survey Andy Field
+menggunakan SPSS Anxiety Questionnaire. SAQ-8 terdiri dari 8 pertanyaan
+berikut:
+1. Statistics makes me cry
+
+2\. My friends will think I’m stupid for not being able to cope with
+SPSS
+
+3\. Standard deviations excite me
+
+4\. I dream that Pearson is attacking me with correlation coefficients
+
+5\. I don’t understand statistics
+
+6\. I have little experience of computers
+
+7\. All computers hate me
+
+8\. I have never been good at mathematics
+
+Lakukan analisis faktor pada data tersebut!
+
+```{r}
+library(haven)
+data= read_sav("./SAQ8.sav")
+head(data)
+```
+
+**#Standardisasi Data**
+
+```{r}
+zdata<-data.frame(scale(data))
+head(zdata)
+```
+
+**cek histogram dan kurva setiap variabel**
+
+```{r}
+hist(zdata[,1], prob=TRUE, main="X1", xlab="X1") 
+lines(density(zdata[,1]))
+hist(zdata[,2], prob=TRUE, main="X2", xlab="X2")
+lines(density(zdata[,2]))
+hist(zdata[,3], prob=TRUE, main="X3", xlab="X3")
+lines(density(zdata[,3]))
+hist(zdata[,4], prob=TRUE, main="X4", xlab="X4")
+lines(density(zdata[,4]))
+hist(zdata[,5], prob=TRUE, main="X5", xlab="X5")
+lines(density(zdata[,5]))
+hist(zdata[,6], prob=TRUE, main="X6", xlab="X6")
+lines(density(zdata[,6]))
+hist(zdata[,7], prob=TRUE, main="X7", xlab="X7")
+lines(density(zdata[,7]))
+hist(zdata[,8], prob=TRUE, main="X8", xlab="X8")
+lines(density(zdata[,8]))
+
+```
+
+*Interpretasi* : Berdasarkan histogram di atas, masing-masing faktor
+tidak mengikuti distribusi normal. Untuk melihat lebih jelas
+kenormalannya maka dilakukan uji Mardia.
+
+**#Uji Kenormalan menggunakan MARDIA TEST Normality Test**
+
+```{r}
+library(MVN)
+normal <- mvn(data =zdata,mvnTest = "mardia")
+print(normal)
+```
+
+**Hipotesis :**
+
+H0 : Data Mengikuti distribusi multivariate normal
+
+H1 : Data tidak mengikuti distribusii multivariate normal
+
+**Tingkat signifikansi = 5%**
+
+**Keputusan :**
+
+p-value dari skeweness \< 0.05 maka Tolak H0.
+
+**Kesimpulan :**
+
+Dengan Tingkat signifikansi 5% dan jumlah sampel yang digunakan, dapat
+disimpulkan bahwa data tidak mengikuti distribusi multivariate normal.
+Akan tetapi, dalam melakukan analisis faktor asumsi ini tidak
+diperlukan.
+
+**Bartlett test**
+
+```{r}
+library(REdaS)
+bart_spher(zdata)
+```
+
+**Hipotesis untuk Bartlett Sphericity**
+
+H0 : Matriks korelasi variabel-variabel dalam dataset adalah matriks
+identitas (tidak ada korelasi antar variabel).
+
+H1 : Matriks korelasi bukan matriks identitas (ada korelasi signifikan
+antar variabel).
+
+**Tingkat signifikansi : 5%**
+
+**Kesimpulan** :
+
+Berdasarkan output di atas, p-value \< 0.05 artinya Tolak H0. Oleh
+karena itu dapat disimpulkan bahwa terdapat korelasi antarvariabel. Hal
+ini memenuhi asumsi dari Analisis faktor, yaitu terdapat korelasi
+antarvariabel.
+
+**UJI KMO**
+
+Uji yang digunakan untuk menentukan kelayakan dari suatu analisis vaktor
+yang akan dilakukan.
+
+```{r}
+library(EFAtools)
+KMO(zdata)
+```
+
+Berdasarkan output di atas, nilai KMO keseluruhan yaituu 0.82. Sebagian
+besar variabel memiliki nilai KMO yang cukup hingga baik, seperti q01
+(0.839), q03 (0.818), q04 (0.848), dan q08 (0.882), menunjukkan hubungan
+yang kuat dengan variabel lainnya. Namun, variabel q02 (0.676) memiliki
+nilai KMO yang lebih rendah, meskipun masih memadai untuk analisis
+faktor. Secara keseluruhan, data ini memiliki korelasi antar variabel
+yang cukup kuat, sehingga cocok untuk digunakan dalam analisis faktor
+untuk mengidentifikasi struktur yang mendasari. Hal ini berarti data
+cukup baik untuk dilakukan analisis faktor.
+
+**Analisis faktor dengan Matriks R (PCA)**
+
+```{r}
+R_data=cov(zdata)
+print(R_data)
+```
+
+Terlihat bahwa matriks kovarians dari data yang sudah distandarkan
+memiliki hasil yang sama dengan matriks korelasi dari data sebelum
+distandarkan. Hal ini berarti sesuai dengan teori yang menyatakan
+pernyataan tersebut.
+
+##### **SCREE PLOT**
+
+```{r}
+library(psych)
+scree(R_data)
+```
+
+Berdasarkan scree plot di atas dan dengan menggunakan teori Kaiser
+Criterion, 2 faktor pertama memiliki nilai eigen \> 1 maka faktor yang
+terpilih untuk dianalisis adalah faktor 1 dan faktor 2.
+
+**ANALISIS FAKTOR dengan Matriks R**
+
+```{r}
+nilaieigen=eigen(R_data)
+print(nilaieigen)
+```
+
+##### Perhitungan Total Varians dan Proporsi Varians.
+
+```{r}
+totalVar=sum(nilaieigen$values)
+propVar=nilaieigen$values/totalVar
+```
+
+##### Proporsi Varians
+
+```{r}
+propVar
+
+```
+
+##### Kumulatif Proporsi Varians
+
+```{r}
+cumsum(propVar)
+
+```
+
+Berdasarkan teori Kaiser Criterion jumlah faktor yang disarankan adalah
+2 faktor pertama, yaitu faktor yang memiliki nilai eigen lebih dari 1.
+Berdasarkan output di atas, 2 faktor pertama hanya dapat menjelaskan
+51.54% variasi datanya. Hal ini berarti 2 faktor pertama tersebut belum
+mampu menjelaskan variasi datanya secara optimal. Sedangkan jika
+menggunakan 4 faktor pertama sudah dapat menjelaskan sekitar 72,7%
+variasi datanya. Hal ini menunjukkan bahwa 4 faktor pertama sudah cukup
+baik untuk menjelaskan atau merangkum sebagian informasi dalam data.
+
+**AF dengan PCA**
+
+```{r}
+pcaData=fa(zdata, nfactor=2, fm="pa", rotate="varimax", covar=F)
+print(pcaData)
+
+```
+
+```{r}
+loadingsData=pcaData$loadings
+print(loadingsData)
+```
+
+Interpretasi :
+
+1.  SS LOADINGS Nilai ini menunjukkan seberapa banyak varians dari
+    variabel asli yang dijelaskan oleh setiap faktor atau komponen.
+
+    -   PA1= 1.690 artinya komponen utama pertama memiliki nilai 1.690,
+        yang berarti komponen pertama ini menjelaskan 1.690 unit varians
+        dari data. Angka ini cukup besar yang mana kontribusi dari
+        komponen utama pertama cukup tinggi dalam menjelaskan struktur
+        data yang ada.
+
+    -   PA2 = 1.293 artinya komponen utama kedua memiliki nilai 1.293,
+        yang berarti komponen kedua ini menjelaskan 1.293 unit varians
+        dari data. Meskipun angka ini lebih rendah dibandingkan dengan
+        PA1, kontribusi dari komponen utama kedua tetap memberikan
+        informasi yang tidak bisa dijelaskan oleh PA1.
+
+2.  Proportion Var PA1 = 0.211 dan PA2 = 0.162
+
+    -   Untuk PA1, proporsi varians yang dijelaskan adalah 21.1%, dan
+
+    -   Untuk PA2, adalah 16.2%. Kedua komponen ini bersama-sama
+        menjelaskan sebagian besar varians dalam data dengan tetap
+        mempertahankan informasi penting dalam data.
+
+3.  Cumulative Var
+
+    -   Untuk PA1, varians kumulatif adalah 21.1% dan
+
+    -   Untuk PA2 varians kumulatif adalah 37.3%. Ini berarti bahwa dua
+        komponen pertama bersama-sama menjelaskan 37.3% dari varians
+        total dalam data
+
+### EXAMPLE 9.14
+
+```{r}
+R_matriks= matrix(c(1,0.505,0.569,0.602,0.621,0.603,0.505,1,0.422,0.467,0.482,0.450,0.569,0.422,1,0.926,0.877,0.878,0.602,0.467,0.926,1,0.874,0.894,0.621,0.482,0.877,0.874,1,0.937,0.603,0.450,0.878,0.894,0.937,1),nrow=6) 
+rownames(R_matriks) <- colnames(R_matriks) <- c("q1", "q2", "q3", "q4", "q5", "q6")
+print(R_matriks) 
+```
+
+#### METODE PRINCIPAL COMPONENT 
+
+##### Tanpa rotasi
+
+```{r}
+pca_hasil <- principal(R_matriks, nfactors = 3, rotate = "none", covar = FALSE)
+print(pca_hasil)
+
+```
+
+##### Dengan rotasi varimax
+
+```{r}
+pca_rotasi <- principal(R_matriks, nfactors = 3, rotate = "varimax", covar = FALSE)
+print(pca_rotasi)
+```
+
+##### Perbandingan pca tanpa rotasi dan dengan rotasi
+
+```{r}
+tanparotasi=round(as.matrix(pca_hasil$loadings),3)
+withrotasi=round(as.matrix(pca_rotasi$loadings),3)
+pca_kumulatif_tanparotasi <- round(cumsum(pca_hasil$Vaccounted[2,]),3)
+pca_kumulatif_withrotasi <- round(cumsum(pca_rotasi$Vaccounted[2,]),3)
+pca_perb= data.frame(
+  Variable = rownames(tanparotasi),
+  F1 = tanparotasi[,1],
+  F2 =tanparotasi[,2],
+  F3 =tanparotasi[,3],
+  sep="|",
+  `F1*`= withrotasi[,1],
+  `F2*` = withrotasi[,2],
+  `F3*` = withrotasi[,3])
+pca_perb=rbind(pca_perb, c("CumVar",pca_kumulatif_tanparotasi,"|", pca_kumulatif_withrotasi))
+print(pca_perb)
+
+```
+
+**INTERPRETASI :**
+
+**Loadings**
+
+Tanpa Rotasi
+
+-   Faktor 1 memiliki loading yang tinggi pada variabel q3, q4, q5 dan
+    q6, menunjukkan bahwa faktor ini mungkin mengukur dimensi yang
+    terkait dengan variabel-variabel ini.
+
+-   Faktor 2 memiliki loading yang sangat tinggi pada q2, menunjukkan
+    bahwa faktor ini berhubungan dengan variabel-variabel tersebut.
+    Variabel q1 juga memiliki laoding yang cukup tinggi meskipun
+    nilainya lebih rendah dibandingkan q2
+
+-   Faktor 3 memiliki loading yang cukup mendominasi pada variabel q1.
+
+    Ini membuat faktor-faktor lebih sulit untuk diinterpretasikan karena
+    tidak ada pemisahan yang jelas antara kontribusi faktor terhadap
+    variabel-variabel tertentu.
+
+Dengan Rotasi :
+
+-   Faktor 1 = Setelah rotasi, q3, q4, q5, dan q6 memiliki loading yang
+    lebih tinggi pada faktor pertama.
+
+-   Faktor 2 = q2 memiliki loading yang sangat tinggi pada faktor kedua
+    setelah rotasi (0.949), menunjukkan bahwa variabel ini sangat
+    terkait dengan faktor ini.
+
+-   Faktor 3 **=** q1 memiliki loading yang sangat tinggi pada faktor
+    ketiga setelah rotasi (0.903), hal ini menunjukkan bahwa variabel
+    ini sangat terkait dengan faktor ini.
+
+Dengan rotasi, faktor-faktor lebih mudah diinterpretasikan karena setiap
+faktor memiliki kontribusi dominan terhadap beberapa variabel.
+
+**Variasi**
+
+Tanpa rotasi :
+
+-   Faktor 1 menjelaskan 74.3% dari total variansi.
+
+-   Faktor 2 menjelaskan 13%.
+
+-   Faktor 3 menjelaskan 7.7%.
+
+-   Cumulative Variance mencapai 95% dengan tiga faktor ini.
+
+Dengan Rotasi (Varimax):
+
+-   Faktor 1 menjelaskan 57.6% dari variansi, yang lebih rendah
+    dibandingkan tanpa rotasi.
+
+-   Faktor 2 menjelaskan 18.7%, yang lebih tinggi dibandingkan sebelum
+    rotasi.
+
+-   Faktor 3 menjelaskan 18.7%, yang lebih tinggi dibandingkan sebelum
+    rotasi.
+
+-   Cumulative Variance juga mencapai 95%, sama seperti tanpa rotasi,
+    tetapi distribusinya lebih tersebar
+
+**Kesimpulan :**
+
+-   Tanpa Rotasi: Hasilnya lebih tersebar dan cukup sulit untuk
+    diinterpretasikan karena beberapa variabel berkontribusi terhadap
+    lebih dari satu faktor.
+
+-   Dengan Rotasi: Setelah rotasi, faktor-faktor menjadi lebih terfokus
+    dan lebih mudah diinterpretasikan. Meskipun variansi yang dijelaskan
+    oleh faktor pertama lebih rendah (57.6% dibandingkan 74.3%),
+    faktor-faktor yang terpisah jelas membuat pemahaman lebih mudah dan
+    lebih informatif.
+
+#### METODE MLE 
+
+##### #tanpa rotasi
+
+```{r}
+mle_hasil <- factanal(
+  covmat = R_matriks,
+  factors = 3, 
+  rotation = "none",
+  method = "mle")
+print(mle_hasil)
+```
+
+##### #dengan rotasi
+
+```{r}
+mle_rotasi<- factanal(
+  covmat = R_matriks,
+  factors = 3,
+  rotation = "varimax", 
+  method = "mle"  
+)
+print(mle_rotasi)
+```
+
+##### Perbandingan MLE tanpa rotasi dan dengan Rotasi
+
+```{r}
+worotasi=round(as.matrix(mle_hasil$loadings),3)
+denganrotasi=round(as.matrix(mle_rotasi$loadings),3)
+
+mle_perb= data.frame(
+  Variable = rownames(worotasi),
+  F1 = worotasi[,1],
+  F2 =worotasi[,2],
+  F3 =worotasi[,3],
+  sep="|",
+  `F1*`= denganrotasi[,1],
+  `F2*` = denganrotasi[,2],
+  `F3*` = denganrotasi[,3])
+mle_perb=rbind(mle_perb, c("CumVar", 0.698, 0.784, 0.824, "|",0.554,0.775,0.824))
+print(mle_perb)
+```
+
+**INTERPRETASI**
+
+**Loadings**
+
+Tanpa Rotasi
+
+-   Faktor 1 memiliki loading yang tinggi pada variabel q1, q3, q4, dan
+    q5, menunjukkan bahwa faktor ini mungkin mengukur dimensi yang
+    terkait dengan variabel-variabel ini.
+
+-   Faktor 2 memiliki loading yang signifikan pada q2 dan q5,
+    menunjukkan bahwa faktor ini berhubungan dengan variabel-variabel
+    tersebut.
+
+-   Faktor 3 memiliki loading yang cukup mendominasi pada variabel q5.
+
+    Ini membuat faktor-faktor lebih sulit untuk diinterpretasikan karena
+    tidak ada pemisahan yang jelas antara kontribusi faktor terhadap
+    variabel-variabel tertentu.
+
+Dengan Rotasi :
+
+-   Faktor 1 = Setelah rotasi, q1, q3, q4, dan q5 memiliki loading yang
+    lebih tinggi pada faktor pertama.
+
+-   Faktor 2 = q2 memiliki loading yang sangat tinggi pada faktor kedua
+    setelah rotasi (0.798), menunjukkan bahwa variabel ini sangat
+    terkait dengan faktor ini. q5 juga memiliki kontribusi pada faktor
+    ini, tetapi dengan loading yang lebih rendah (0.359).
+
+-   Faktor 3lebih terfokus pada variabel q5 dan q6, meskipun q6 memiliki
+    loading yang lebih rendah dibandingkan q5
+
+Dengan rotasi, faktor-faktor lebih mudah diinterpretasikan karena setiap
+faktor memiliki kontribusi dominan terhadap beberapa variabel.
+
+**Variasi**
+
+Tanpa rotasi :
+
+-   Faktor 1 menjelaskan 69.8% dari total variansi.
+
+-   Faktor 2 menjelaskan 7.8%.
+
+-   Faktor 3 menjelaskan 3.9%.
+
+-   Cumulative Variance mencapai 82.4% dengan tiga faktor ini.
+
+Dengan Rotasi (Varimax):
+
+-   Faktor 1 menjelaskan 55.4% dari variansi, yang lebih rendah
+    dibandingkan tanpa rotasi.
+
+-   Faktor 2 menjelaskan 22.1%, yang lebih tinggi dibandingkan sebelum
+    rotasi.
+
+-   Faktor 3 menjelaskan 4.9%, sedikit lebih tinggi dibandingkan sebelum
+    rotasi.
+
+-   Cumulative Variance juga mencapai 82.4%, sama seperti tanpa rotasi,
+    tetapi distribusinya lebih tersebar
+
+**Kesimpulan :**
+
+-   Tanpa Rotasi: Hasilnya lebih tersebar dan cukup sulit untuk
+    diinterpretasikan karena beberapa variabel berkontribusi terhadap
+    lebih dari satu faktor.
+
+-   Dengan Rotasi: Setelah rotasi, faktor-faktor menjadi lebih terfokus
+    dan lebih mudah diinterpretasikan. Meskipun variansi yang dijelaskan
+    oleh faktor pertama lebih rendah (55.4% dibandingkan 69.8%),
+    faktor-faktor yang terpisah jelas membuat pemahaman lebih mudah dan
+    lebih informatif.

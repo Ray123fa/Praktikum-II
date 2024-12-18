@@ -1,0 +1,303 @@
+---
+title: "Praktikum 11"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-17"
+output: word_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Menyiapkan library yang digunakan
+
+```{r}
+# Mengecek dan menginstal package jika belum ada
+packages <- c("readr", "dplyr", "DT", "psych", "GPArotation", "magrittr", "corrplot", "factoextra", "caret")
+invisible(lapply(packages, function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, quietly = TRUE)
+  }
+}))
+
+# Memuat library
+library(readr)  # Membaca data
+library(dplyr)  # Data processing
+library(DT)     # Menampilkan tabel agar mudah dilihat di browser
+library(psych)
+library(GPArotation)
+library(magrittr)
+library(factoextra)
+library(corrplot)
+library(caret)
+```
+
+## Membaca Data
+
+```{r}
+#import data
+data <- read.csv("./datasim2.csv", sep=";")
+
+# Mengubah data menjadi data frame
+data <- data %>% data.frame()
+data
+```
+
+# A. Analisis Biplot dan Korespondensi
+
+### Menggunakan kolom kab_kot sebagai row names
+
+```{r}
+# Menggunakan kolom kab_kot sebagai row names
+row.names(data) <- data %>% select(kab_kot) %>% t()
+
+# Menghapus kolom kab_kot yang tidak diperlukan dalam PCA
+data <- data %>% select(-kab_kot)
+```
+
+### Menghapus kolom kab_kot dan menghitung pca
+
+```{r}
+pca<-data%>%prcomp(scale = TRUE)
+```
+
+### Menampilkan summary
+
+Memahami kontribusi tiap principal component dalam menjelaskan variabilitas data, sehingga dapat memutuskan jumlah principal component yang relevan untuk digunakan.
+
+```{r}
+summary(pca)
+```
+
+### Menampilkan biplot
+
+```{r}
+fviz_pca_biplot(pca, repel = TRUE, geom.ind=c("point","text"), col.ind = "black", col.var = 'blue', title = 'Biplot PCA') + theme(text = element_text(size = 12))
+```
+
+-   **Dim1 (89.3%)**:\
+    Menjelaskan **sebagian besar variansi** (89.3%) dalam data. Sumbu ini merupakan komponen utama yang menggambarkan perbedaan signifikan antar individu (kabupaten/kota) dalam dataset.
+
+-   **Dim2 (6.7%)**:\
+    Menjelaskan **sejumlah kecil variansi** (6.7%). Walaupun kontribusinya kecil, Dim2 masih menambahkan informasi tambahan terkait variasi data.
+
+Dengan total **96%** variansi yang dijelaskan oleh dua dimensi pertama, biplot ini efektif menggambarkan pola dan hubungan dalam data.
+
+Vektor variabel menunjukkan arah dan kontribusi setiap variabel dalam membentuk sumbu Dim1 dan Dim2.
+
+-   **`tingkat_pengangguran`**
+
+    -   Vektor ini memiliki kontribusi besar ke arah kanan (positif pada Dim1).
+
+    -   Kabupaten/kota yang terletak di sisi kanan memiliki nilai **tingkat pengangguran yang tinggi**.
+
+-   **`ipm` (Indeks Pembangunan Manusia)**
+
+    -   Vektor ini mengarah ke kiri bawah (negatif pada Dim1 dan Dim2).
+
+    -   Kabupaten/kota di sisi kiri bawah memiliki **nilai IPM yang tinggi**.
+
+-   **`pdrb`, `per_kapita`, dan `akses_internet`**
+
+    -   Vektor-variabel ini memiliki arah yang hampir sama (negatif di Dim1 dan sedikit negatif di Dim2).
+
+    -   Kabupaten/kota di sisi kiri (negatif Dim1) cenderung memiliki **PDRB per kapita yang tinggi** serta **akses internet yang baik**.
+
+Dimensi 1 (Dim1) membedakan daerah berdasarkan **tingkat pengangguran** vs **variabel ekonomi dan akses** seperti PDRB, IPM, dan akses internet. Variabel-variabel ini memiliki hubungan negatif satu sama lain (tingkat pengangguran vs indikator ekonomi).
+
+-   **Kabupaten/Kota di Sisi Kanan (Z, AA, AC, dll.)**
+
+    -   Letaknya dekat vektor `tingkat_pengangguran`.
+
+    -   Kabupaten/kota ini memiliki **tingkat pengangguran tinggi** tetapi nilai variabel ekonomi lainnya cenderung rendah.
+
+-   **Kabupaten/Kota di Sisi Kiri (A, B, H, dll.)**
+
+    -   Dekat vektor **`pdrb`, `akses_internet`, dan `ipm`**.
+
+    -   Kabupaten/kota ini memiliki **PDRB per kapita tinggi, IPM tinggi, dan akses internet baik**.
+
+    -   Misalnya, titik **A** dan **B** mencerminkan wilayah dengan kondisi ekonomi yang lebih baik.
+
+-   **Kabupaten/Kota di Kuadran Atas (P, M, O, dll.)**
+
+    -   Berada di area positif Dim2 dan bervariasi di Dim1.
+
+    -   Kabupaten/kota ini menunjukkan karakteristik yang **tidak terlalu dipengaruhi oleh pengangguran maupun variabel ekonomi utama**.
+
+-   **Kabupaten/Kota di Kuadran Bawah (F, D, H, dll.)**
+
+    -   Cenderung memiliki nilai variabel seperti **IPM** yang lebih tinggi dan pengangguran lebih rendah.
+
+### Membuat biplot dengan label hanya untuk individu terpilih
+
+Pada biplot ini, hanya individu tertentu (A, F, K, P, Z) yang ditampilkan dengan **label berwarna merah**, sehingga analisis lebih fokus pada posisi individu-individu tersebut terhadap variabel-variabel yang ada.
+
+```{r}
+individu_terpilih <- c("A", "F", "K", "P", "Z")
+
+
+fviz_pca_biplot(pca, label = c("var","ind"),
+repel = TRUE,
+geom.ind=c("point","text"), # Menampilkan titik individu
+col.ind = "red", # Warna titik individu menjadi merah
+col.var = "black",# warna vector vriabel
+select.ind = list(name = individu_terpilih), # Memilihindividu
+title = "Biplot PCA dengan Label Individu Terpilih") +
+theme(text = element_text(size = 14)) # Memperbesar ukuran teks
+```
+
+-   **Dim1 (89.3%)**: Menjelaskan sebagian besar variasi dalam data, yang menggambarkan perbedaan signifikan antara individu berdasarkan variabel-variabel utama seperti **tingkat pengangguran** dan **PDRB/akses internet**.
+
+-   **Dim2 (6.7%)**: Menambahkan sedikit variasi tambahan yang membantu membedakan individu berdasarkan kontribusi minor dari beberapa variabel.
+
+**Total kontribusi** dari kedua sumbu adalah **96%**, sehingga plot ini sangat representatif untuk menggambarkan hubungan antar individu dan variabel.
+
+Biplot ini menyoroti **5 individu terpilih** dan memberikan gambaran:
+
+1.  **A** dan **F** cenderung memiliki kondisi ekonomi yang lebih baik (PDRB, IPM, akses internet).
+
+2.  **Z** memiliki **tingkat pengangguran yang tinggi**.
+
+3.  **K** dan **P** berada dalam posisi yang lebih **rata-rata** atau tidak ekstrem.
+
+# B. Analisis Cluster
+
+### Standarisasi Data
+
+Standarisasi diperlukan karena variabel-variabel dalam dataset memiliki skala pengukuran yang berbeda. Dengan standarisasi, nilai tiap variabel diubah menjadi skala yang sama (rata-rata = 0, standar deviasi = 1), sehingga semua variabel memiliki bobot yang setara dalam analisis klaster. Data yang sudah distandarisasi ditampilkan dalam tabel interaktif untuk memastikan prosesnya berhasil.
+
+```{r}
+data_standardized = predict(preProcess(data,
+                                       method = c("center", "scale")), data)
+```
+
+```{r}
+data_standardized<-round(scale(data[,1:4]),4) 
+#Hanya memilih kolom/variabel berisi indikator yang akan digunakan
+datatable(data_standardized, caption = "Data Hasil Standardisasi")
+```
+
+```{r}
+data_standardized
+```
+
+### Eksplorasi Data
+```{r}
+M<-cor(data_standardized)
+cor(data_standardized)
+```
+```{r}
+corrplot(M, method = "ellipse")
+```
+
+### Transformasi Data
+```{r}
+pca<-data_standardized%>%prcomp(scale=TRUE)
+summary(pca)
+data_pc<-pca$x[,1:2]
+```
+Terlihat hanya standar deviasi dari komponen 1 lebih dari satu dan proporsi variannya lebih dari 80 persen sehingga bisa dipilih 1 komponen. Namun untuk pemeriksaan kecenderungan pengelompokan, diperlukan dua komponen sehingga dipilih PC1 dan PC2
+
+### Pemeriksaan Kecendrungan Pengelompokan
+#### Visual Assessment of Cluster Tendency
+```{r}
+dist.cor<-get_dist(data_pc,method="pearson")
+fviz_dist(dist.cor,lab_size=8)
+```
+
+#### Hopkin Statistics
+```{r}
+res<-get_clust_tendency(data_pc,
+n=nrow(data_pc)-1, graph=TRUE)
+res
+```
+
+Plot nilai statistik Hopkins menunjukkan ada kecenderungan terbentuk klaster
+
+### Menentukan Jumlah Klaster
+
+Menggunakan metode Elbow Plot untuk menentukan jumlah klaster optimal.Dalam langkah ini, total within-cluster sum of squares (WSS) dihitung untuk berbagai jumlah klaster (1 hingga 9). Plot yang dihasilkan menunjukkan titik "elbow" di mana penurunan nilai WSS mulai melambat.
+
+```{r}
+jumlah_klaster<-c(1:9) #Vektor yang berisi jumlah klaster yang ingin dilihat nilai dari total within-cluster sum of squares
+
+within_ss<-c() #Vektor kosong yang akan diisi nilai total within-cluster sum of squares
+
+for (i in jumlah_klaster){
+  within_ss<-c(within_ss, kmeans(x=data_standardized, centers = i, nstart = 25)$tot.withinss)
+}
+
+plot(x = jumlah_klaster, y = within_ss, type = "b",
+     xlab = "Number of Cluster",
+     ylab = "Total Within Sum of Squares",
+     main = "Elbow Plot")
+abline(v = 3, col ="red")
+```
+
+Dari Elbow Plot di atas, dapat dilihat bahwa pada titik keempat nilai total WSS mulai menunjukkan penurunan yang kurang berarti, sehingga berdasarkan plot tersebut akan ditentukan jumlah klaster yang akan dibentuk adalah tiga klaster.
+
+### Analisis Cluster
+
+Analisis klaster menggunakan algoritma K-Means. Algoritma ini membagi data ke dalam tiga klaster berdasarkan centroid yang diinisialisasi secara acak. Posisi centroid diperbarui hingga jarak antara anggota klaster dan centroidnya minimal.
+
+```{r}
+set.seed(123)
+
+kmeans_clustering<-kmeans(x = data_standardized, centers = 3, nstart = 10) #parameter nstart digunakan untuk memberitahu fungsi berapa kali inisiasi centroid awal (secara acak) akan dibentuk
+
+kmeans_clustering
+```
+
+**Dari output di atas diperoleh:**
+
+1.  Ketiga klaster beranggotakan 10 observasi
+
+2.  **Clustering vector** menunjukkan nomor klaster untuk setiap observasi.
+
+3.  **Centroid atau pusat** dari setiapklaster dapat dilihat pada **Cluster means**.
+
+### Nilai Centroid data aslinya
+
+Setelah cluster terbentuk, selanjutnya mengembalikan nilai centroid ke satuan pengukuran awal masing masing variabel untuk melihat rata-rata asli dari variabel tersebut.
+
+```{r}
+data%>%
+  mutate(Klaster = kmeans_clustering$cluster)%>%
+  group_by(Klaster)%>%
+  summarise(Mean_pdrb_per_kapita = mean(pdrb_per_kapita), 
+            Mean_ipm = mean(ipm),
+            Mean_akses_internet = mean(akses_internet),
+            Mean_tingkat_pengangguran = mean(tingkat_pengangguran))
+```
+
+### Pengelompokan Objek ke Dalam Cluster
+
+```{r}
+# Load paket tibble terlebih dahulu
+library(tibble)
+
+# Menambahkan kolom Klaster dari hasil kmeans_clustering
+cluster_data <- data %>%
+  mutate(Klaster = kmeans_clustering$cluster) %>%  # Menambahkan kolom Klaster
+  rownames_to_column(var = "kab_kot") %>%         # Mengembalikan row names ke kolom kab_kot
+  select(kab_kot, Klaster) %>%                    # Memilih kolom kab_kot dan Klaster
+  arrange(Klaster)                                # Mengurutkan berdasarkan Klaster
+
+# Menampilkan hasil
+cluster_data
+```
+
+### Menambahkan Label Cluster ke Dataset
+```{r}
+data$cluster = kmeans_clustering$cluster
+data
+```
+
+### Visualisasi Hasil Clustering
+```{r}
+fviz_cluster(kmeans_clustering, data = data[,-1], geom = "point", ellipse.type = "norm", palette = "jco", ggtheme = theme_minimal())
+```
+
+Warna pada plot menunjukkan cluster yang berbeda. Ini membantu memvisualisasikan bagaimana kabuaten/kota dikelompokkan berdasarkan 4 macam indikator.

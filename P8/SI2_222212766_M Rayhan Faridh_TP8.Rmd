@@ -1,0 +1,220 @@
+---
+title: "Penugasan Praktikum 8"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-03"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.	Lakukan Analisis Komponen Utama dari data kata penyelidikan (Tabel). Gunakan Dua sumber data input yaitu matriks S dan R. Menurut Anda mana yang lebih tepat di sini? Tunjukkan persentase varians yang dijelaskan. Berdasarkan nilai eigen rata- rata atau plot scree, putuskan berapa banyak komponen yang harus dipertahankan. Dapatkah Anda menginterpretasikan komponen dari S atau R?
+
+```{r}
+library(readxl)
+data <- read_excel("soal pertemuan 8.xlsx", 
+    sheet = "no1")
+head(data)
+```
+
+#### Menggunakan matriks kovarians
+
+a\. Mencari matriks kovarians
+
+```{r}
+data1=cov(data)
+data1
+```
+
+b\. Menghitung eigen vektor
+
+```{r}
+eigen1=eigen(data1)
+eigen1
+```
+
+Pada data ini digunakan matriks korelasi sehingga lamda untuk komponen yang paling baik adalah komponen yang memiliki lamda lebih dari 1 karena dapat menjelaskan variasi data yang lebih representatif. Berdasarkan output tersebut terlihat bahwa lamda pada komponen 1 memiliki nilai lambda lebih dari 1. Nilai eigen menunjukkan variabilitas yang dijelaskan oleh masing-masing komponen utama. Dari hasil ini, nilai eigen terbesar adalah 3.146, yang berarti komponen utama pertama menjelaskan proporsi terbesar dari variabilitas data.
+
+c\. Scree Plot
+
+```{r}
+plot(eigen1$values, type = "b", main = "Scree Plot dari Nilai Eigen",ylab = "Nilai Eigen", xlab="Komponen")
+```
+
+Berdasarkan scree Plot di atas, terlihat bahwa penurunan curam terjadi pada saat lamda komponen 1. Oleh karena itu, komponen 1, memiliki variabilitas terbaik yang dapat menjelaskan data-datanya. Akan tetapi, penurunan yang signifikan terjadi pada komponen ke komponen 2 lalu terjadi elbow (penurunan yang mendatar) setelah komponen 2. Ini dapat mengindikasikan bahwa komponen 1 dan komponen 2 adalah komponen yang paling signifikan sehingga kedua komponen ini dapat dipertahankan. Hal ini memiliki hasill yang sama dengan menggunakan matriks korelasi.
+
+d\. Melakukan Analisis Komponen Utama
+
+```{r}
+AKU1=princomp(data, cor=FALSE)
+loadings(AKU1)
+summary(AKU1)
+
+# korelasi nilai KU dengan nilai variabel awal
+KU1=AKU1$scores
+cor(data,KU1)
+```
+
+Terlihat dari Summarynya bahwa kumulative variancenya pada komponen 2 yaitu 80, 73%. Artinya, dari komponen 1 hingga komponen 2 sudah dapat menjelaskan variasi datanya (Syarat lebih dari 75%). Untuk melihat kontribusi dari variabel awal (X) pada komponen utama (Y) dapat dilakukan dengan dua cara, yakni melihat korelasi parsialnya, atau hanya melihat koefisien nilai vektor eigennya. Namun, disini dilakukan dengan melihat korelasi parsialnya.
+
+• Untuk komponen utama pertama, variabel x1 sampai x5 menghasilkan kontribusi besar, dengan variabel yang paling berkontribusi adalah x3.
+• Untuk komponen utama kedua, variabel yang paling berkontribusi adalah x5.
+
+#### Menggunakan matriks korelasi
+
+a\. Menghitung korelasi antar variabel
+
+```{r}
+data2=cor(data)
+data2
+```
+
+Berdasarkan output di atas, terdapat korelasi yang besar ( \> 0.5) yaitu variabel y1 dan y2, y1 dan y3, y4 dan y3, y5 dan y3, serta y4 dan y2. Korelasi ini mengindikasikan adanya potensi redundansi antar variabel yang bisa dikompresi oleh PCA.
+
+b\. Menghitung eigen vektor
+
+```{r}
+eigen2=eigen(data2)
+eigen2
+```
+
+Pada data ini digunakan matriks korelasi sehingga lamda untuk komponen yang paling baik adalah komponen yang memiliki lamda lebih dari 1 karena dapat menjelaskan variasi data yang lebih representatif. Berdasarkan output tersebut terlihat bahwa lamda pada komponen 1 memiliki nilai lambda lebih dari 1. Nilai eigen menunjukkan variabilitas yang dijelaskan oleh masing-masing komponen utama. Dari hasil ini, nilai eigen terbesar adalah 3.146, yang berarti komponen utama pertama menjelaskan proporsi terbesar dari variabilitas data.
+
+c\. Scree Plot
+
+```{r}
+plot(eigen2$values, type = "b", main = "Scree Plot dari Nilai Eigen",ylab =
+"Nilai Eigen", xlab="Komponen")
+```
+
+Berdasarkan scree Plot di atas, terlihat bahwa penurunan curam terjadi pada saat lamda komponen 1. Oleh karena itu, komponen 1, memiliki variabilitas terbaik yang dapat menjelaskan data-datanya. Akan tetapi, penurunan yang signifikan terjadi pada komponen 1 ke komponen 2 lalu terjadi elbow (penurunan yang mendatar) setelah komponen 2. Ini dapat mengindikasikan bahwa komponen 1 dan komponen 2 adalah komponen yang paling signifikan sehingga kedua komponen ini dapat dipertahankan.
+
+d\. Melakukan Analisis Komponen Utama
+
+```{r}
+AKU1=princomp(data, cor=FALSE)
+loadings(AKU1)
+summary(AKU1)
+
+# korelasi nilai KU dengan nilai variabel awal
+KU1=AKU1$scores
+cor(data,KU1)
+```
+
+Terlihat dari Summarynya bahwa kumulative variancenya pada komponen 2 yaitu 80,62%. Artinya, dari komponen 1 hingga komponen 2 sudah dapat menjelaskan variasi datanya (Syarat lebih dari 75%). Output terakhir merupakan Component Matrix yang menunjukkan loading faktor atau hubungan antara variabel awal dan komponen utama. Nilai besar secara absolut menunjukkan variabel tersebut sangat berkontribusi pada komponen tertentu.
+
+**KESIMPULAN KESELURUHAN**
+a. Berdasarkan perhitungan menggunakan matriks korelasi dan kovarians, komponen yang dipertahankan adalah komponen 1 dan komponen 2.
+b. Variasi yang dapat dijelaskan oleh 2 komponen pertama menggunakan matriks korelasi yaitu sebesar 80.62%, sedangkan ketika menggunakan matriks kovarians variasi yang dapat dijelaskan yaitu 80.73%. Artinya 2 komponen pertama sudah cukup untuk memberikan variasi data sebesar 80% sehingga hal ini sudah dapat memaksimalkan informasi.
+
+c\. Scree plot yang dihasilkan ketika menggunakan matriks korelasi dan kovarians hampir sama, yaitu terjadi elbow (penurunan yang mendatar) setelah komponen kedua.
+
+d\. Karena semua variabel sudah berada dalam skala yang sama, matriks S (kovarian) lebih cocok digunakan diabndingkan matriks R (korelasi).
+
+2.  Lakukan analisis komponen utama secara terpisah untuk laki-laki dan perempuan pada data psikologis berikut. Bandingkan hasil untuk kedua kelompok. Gunakan S.
+
+```{r}
+library(readxl)
+Data <- read_excel("soal pertemuan 8.xlsx", 
+    sheet = "no2")
+
+laki=Data[,1:4]
+perempuan=Data[,5:8]
+```
+
+#### Kelompok Laki-laki
+
+a\. Mencari matriks kovarians
+
+```{r}
+kov_laki=cov(laki)
+kov_laki
+```
+
+b\. Menghitung eigen vektor
+
+```{r}
+eigenlaki=eigen(kov_laki) 
+eigenlaki
+```
+
+Nilai eigen menunjukkan variabilitas yang dijelaskan oleh masing-masing komponen utama. Dari hasil ini, nilai eigen terbesar adalah 43.56 yang berarti komponen utama pertama menjelaskan proporsi terbesar dari variabilitas data. Komponen utama kedua memiliki nilai eigen 11.138, dan seterusnya hingga komponen terakhir (nilai eigen terkecil 2.52).
+
+c\. Scree Plot
+
+```{r}
+plot(eigenlaki$values, type = "b", main = "Scree Plot dari Nilai Eigen",ylab = "Nilai Eigen", xlab="Komponen")
+```
+
+Berdasarkan scree Plot di atas, terlihat bahwa penurunan curam terjadi pada saat lamda komponen 1. Oleh karena itu, komponen 1, memiliki variabilitas terbaik yang dapat menjelaskan data-datanya. Akan tetapi, penurunan yang signifikan terjadi pada komponen 1 ke komponen 2 lalu terjadi elbow (penurunan yang mendatar) setelah komponen 2. Ini dapat mengindikasikan bahwa komponen 1 dan komponen 2 adalah komponen yang paling signifikan sehingga kedua komponen ini dapat dipertahankan.
+
+d\. Melakukan Analisis Komponen Utama
+
+```{r}
+AKU_laki=princomp(laki, cor=FALSE)
+loadings(AKU_laki)
+summary(AKU_laki)
+KU_laki=AKU_laki$scores
+cor(laki,KU_laki)
+```
+
+Terlihat dari Summarynya bahwa kumulative variancenya pada komponen 2 yaitu 85, 88%. Artinya, dari komponen 1 hingga komponen 2 sudah dapat menjelaskan variasi datanya (Syarat lebih dari 75%).
+
+Untuk melihat kontribusi dari variabel awal (X) pada komponen utama (Y) dapat dilakukan dengan dua cara, yakni melihat korelasi parsialnya, atau hanya melihat koefisien nilai vektor eigennya. Namun, disini dilakukan dengan melihat korelasi parsialnya.
+• Untuk komponen utama pertama, variabel x1 sampai x4 menghasilkan kontribusi
+besar, dengan variabel yang paling berkontribusi adalah x3.
+• Untuk komponen utama kedua, variabel yang paling berkontribusi adalah x2.
+
+#### Kelompok Perempuan
+
+a\. Mencari matriks kovarians
+
+```{r}
+kov_perempuan=cov(perempuan) 
+kov_perempuan
+```
+
+b\. Menghitung eigen vektor
+
+```{r}
+eigenperempuan=eigen(kov_perempuan)  
+eigenperempuan
+```
+
+Nilai eigen menunjukkan variabilitas yang dijelaskan oleh masing-masing komponen utama. Dari hasil ini, nilai eigen terbesar adalah 48.95 yang berarti komponen utama pertama menjelaskan proporsi terbesar dari variabilitas data. Komponen utama kedua memiliki nilai eigen 18.463, dan seterusnya hingga komponen terakhir (nilai eigen terkecil 4.818).
+
+c\. Scree Plot
+
+```{r}
+plot(eigenperempuan$values, type = "b", main = "Scree Plot dari Nilai Eigen",ylab = "Nilai Eigen", xlab="Komponen")
+```
+
+Berdasarkan scree Plot di atas, terlihat bahwa penurunan curam terjadi pada saat lamda komponen 1. Oleh karena itu, komponen 1, memiliki variabilitas terbaik yang dapat menjelaskan data-datanya. Akan tetapi, penurunan yang signifikan terjadi pada komponen 1 ke komponen 2 lalu terjadi elbow (penurunan yang mendatar) setelah komponen 2. Ini dapat mengindikasikan bahwa komponen 1 dan komponen 2 adalah komponen yang paling signifikan sehingga kedua komponen ini dapat dipertahankan.
+
+d\. Melakukan Analisis Komponen Utama
+
+```{r}
+AKU_perempuan=princomp(perempuan, cor=FALSE) 
+loadings(AKU_perempuan) 
+summary(AKU_perempuan)
+KU_perempuan=AKU_perempuan$scores 
+cor(perempuan,KU_perempuan)
+```
+
+Terlihat dari Summarynya bahwa kumulative variancenya pada komponen 2 yaitu 78,59%. Artinya, dari komponen 1 hingga komponen 2 sudah dapat menjelaskan variasi datanya (Syarat lebih dari 75%).
+
+Untuk melihat kontribusi dari variabel awal (X) pada komponen utama (Y) dapat dilakukan dengan dua cara, yakni melihat korelasi parsialnya, atau hanya melihat koefisien nilai vektor eigennya. Namun, disini dilakukan dengan melihat korelasi parsialnya.
+• Untuk komponen utama pertama, variabel x1 sampai x4 menghasilkan kontribusi
+besar, dengan variabel yang paling berkontribusi adalah x3.
+• Untuk komponen utama kedua, variabel yang paling berkontribusi adalah x2.
+
+Perbandingan Antarkelompok.
+Berdasarkan perhitungan di atas, didapatkan kesimpulan bahwa :
+
+• Pada kelompok laki-laki dan perempuan, didapatkan bahwa komponen 1 dan komponen 2 memiliki variabilitas data yang paling baik dalam melengkapi informasi variabel-variabelnya.
+• Scree plot dari kedua kelompok memiliki output yang hampir sama, yaitu terjadi elbow (penurunan yang mendatar) setelah komponen ke dua.
+• Pada kelompok laki-laki, dua komponen pertama memberikan variasi sebesar 85,88%. Sedangkan pada kelompok perempuan, dua komponen pertama memberikan variasi sebesar 78,59%. Artinya kedua kelompok dapat mempertahankan komponen 1 dan komponen 2 karena dapat menjelaskan variasi lebih dari 75% dan memberikan informasi yang cukup lengkap.
+• Pada kelompok laki-laki dan perempuan, didapatkan bahwa variabel ketiga memiliki kontribusi paling tinggi di komponen 1 dan variabel kedua memiliki kontribusi paling tinggi di komponen 2
+
+Dengan demikian, kedua kelompok memperoleh hasil yang sama yaitu mempertahankan komponen 1 dan komponen 2 dalam menjelaskan informasi atau variasi datanya.

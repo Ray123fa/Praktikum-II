@@ -1,0 +1,87 @@
+---
+title: "APG_P8_Analisis Komponen Utama"
+author: "Muhammad Rayhan Faridh"
+date: "2024-11-28"
+output:
+  word_document: default
+---
+
+### 1. Import data
+
+enam variabel hematologi diukur pada 51 pekerja (Royston 1983) yaitu:
+
++-------------------------------+------------------------------+
+| y1: konsentrasi hemoglobin \  | y4: jumlah limfosit\         |
+| y2: volume sel yang dikemas \ | y5: jumlah neutrofil\        |
+| y3: jumlah sel darah putih    | y6: konsentrasi timbal serum |
++-------------------------------+------------------------------+
+
+```{r}
+library(psych)
+library(GPArotation)
+library(readxl)
+datanya <- read_excel("./data_p8.xlsx")
+data_aku <- data.frame(datanya$y1,datanya$y2,datanya$y3,datanya$y4,datanya$y5,datanya$y6)
+head(data_aku)
+```
+
+Karena data-data tersebut berbeda jauh dalam hal besarannya, maka menggunakan cara yang terstandardisasi (yakni memakai matriks korelasi).
+
+### 2. Menghitung korelasi antarvariabel
+
+```{r}
+round(cor(data_aku), digits = 3)
+```
+
+Dua korelasi terbesar adalah korelasi antara konsentrasi hemoglobin (y1) dan volume sel yang dikemas (y2) serta korelasi antara jumlah sel darah putih (y3) dan jumlah limfosit (y4).
+
+### 3. Menghitung eigenvektor
+
+```{r}
+eigen(cor(data_aku))
+```
+
+### 4. Melakukan analisis komponen utama
+
+```{r}
+AKU <- princomp(data_aku, cor = TRUE)
+summary(AKU)
+```
+
+Dengan melihat proporsi kumulatif varians, diperoleh bahwa untuk tiga komponen utama pertama, yakni komponen utama 1 sampai komponen utama 3 yang dapat mewakili informasi sekitar 80,9 persen dari total varians yang telah terstandardisasi.
+
+Selain itu, dengan melihat nilai eigen yang dihitung di awal, nampak bahwa nilai eigen yang lebih dari satu terletak pada tiga komponen utama pertama juga.
+
+```{r}
+scree(data_aku, factors = TRUE, pc = TRUE, main = "Scree plot",
+      hline = NULL, add = FALSE)
+```
+
+Dengan menggunakan scree plot, siku berada pada komponen utama ketiga. Artinya, nilai eigen setelah $\lambda_3$ semuanya relatif kecil dan ukurannya hampir sama.
+
+Jadi, dengan menggunakan ketiga pendekatan tersebut, didapatkan hasil yang konsisten, yakni bahwa komponen utama yang digunakan adalah tiga komponen utama pertama, yakni komponen utama satu, dua, dan tiga.
+
+## Korelasi nilai KU dengan nilai variabel awal
+
+```{r}
+KU <- AKU$scores
+KU
+```
+```{r}
+cor(data_aku,KU)
+```
+
+Dari hasil korelasi parsial antara variabel awal (X) dengan komponen utama, diperoleh bahwa:
+
+-   Untuk KU pertama, dua variabel yang paling berkontribusi secara berturut-turut adalah variabel y3 (jumlah sel darah putih) dan y4 (jumlah limfosit)
+
+-   Untuk KU kedua, dua variabel yang paling berkontribusi secara berturut-turut adalah variabel y1 (konsentrasi hemoglobin) dan y2 (volume sel yang dikemas)
+
+-   Untuk KU ketiga, dua variabel yang paling berkontribusi secara berturut-turut adalah variabel y6 (konsentrasi timbal serum) dan y5 (jumlah neutrofil)
+
+
+
+
+
+
+

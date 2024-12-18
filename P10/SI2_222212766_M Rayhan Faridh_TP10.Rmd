@@ -1,0 +1,105 @@
+---
+title: "Penugasan Praktikum 10"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-17"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Soal
+
+1\. Ambil data rata-rata lama sekolah, harapan lama sekolah ,umur harapan hidup saat lahir dan pengeluaran perkapita yang disesuaikan tahun 2022 per provinsi dari bps.go.id\
+2. Buatlah biplot dari data tersebut dan intepretssikan hasilnya
+
+# Jawab
+
+## 1. Mengambil data
+
+```{r}
+library(readxl)
+library(dplyr)
+data = read_excel("./penugasan10.xlsx")
+data = as.data.frame(data)
+rownames(data) = data[,1]
+data = data %>% select(-Provinsi)
+data
+```
+
+## 2. Membuat biplot
+
+### Principal Component Analysis
+
+```{r}
+library(stats)
+hasil_pca = prcomp(data, scale=TRUE)
+hasil_pca
+
+#mencari matriks V dan U dengan dekomposisi SVD
+X = as.matrix(data)
+xbar = colMeans(X)
+Xbar = matrix(
+  c(rep(xbar[1],34),
+    rep(xbar[2],34),
+    rep(xbar[3],34),
+    rep(xbar[4],34)
+    ), ncol=4
+)
+stdev = apply(X, 2, sd)
+Stdev =  matrix(
+  c(rep(stdev[1],34),
+    rep(stdev[2],34),
+    rep(stdev[3],34),
+    rep(stdev[4],34)
+    ), ncol=4
+)
+
+#standardisasi
+Xc = (X - Xbar) / Stdev
+
+#matriks U
+cat("\n Matriks U dari dekomposisi SVD \n")
+U = svd(Xc)$u[,c(1:2)]
+rownames(U) = rownames(data)
+U
+
+#matriks V
+cat("\n Matriks V dari dekomposisi SVD \n")
+V = svd(Xc)$v[,c(1:2)]
+rownames(V) = colnames(data)
+V
+```
+
+Terlihat bahwa:
+
+-   Hasil dari analisis komponen utama dengan data yang sudah distandardisasi merupakan matriks V pada dekomposisi matriks oleh singular value decomposition
+
+-   Standardisasi yang digunakan pada fungsi princomp() adalah $X_c = (X-Xbar)/Stdev$
+
+-   Matriks U dan V didapatkan dari dekomposisi matriks oleh SVD dari $X_c$
+
+### Biplot
+
+```{r}
+library(factoextra)
+fviz_pca_biplot(hasil_pca,
+                col.ind = "cos2",
+                col.var = "black",
+                gradient.cols = c("blue","green","red"),
+                labelsize = 2)
+summary(hasil_pca, loadings=TRUE)
+```
+
+### Interpretasi
+
+-   Variabel Harapan Lama Sekolah (HLS) memiliki nilai keragaman tertinggi dibandingkan ketiga variabel lainnya. Hal ini ditunjukkan dengan panjang vektor dari variabel HLS terpanjang daripada yang lain. Sebaliknya, variabel Rata-rata Lama Sekolah memiliki nilai keragaman terendah, karena panjang vektornya terpendek.
+
+-   Variabel Pengeluaran per Kapita yang disesuaikan dan Usia Harapan Hidup saat lahir memiliki korelasi positif yang tinggi, karena kedua vektor variabel tersebut membentuk sudut lancip yang sempit. Di sisi lain, variabel Harapan Lama Sekolah memiliki korelasi yang rendah dengan variabel Pengeluaran per Kapita yang disesuaikan dan Usia Harapan Hidup karena vektornya hampir tegak lurus.
+
+-   Provinsi DKI Jakarta merupakan salah satu provinsi yang mencerminkan tingkat Usia Harapan Hidup saat lahir dan Pengeluaran per kapita disesuaikan yang tinggi. Selain itu, Daerah Istimewa Yogyakarta adalah provinsi yang mencerminkan Rata-rata Lama Sekolah dan Harapan Lama Sekolah yang tinggi.
+
+-   Provinsi Papua berada di bawah rata-rata dari keempat variabel tersebut, karena titiknya berlawanan dengan keempat vektor variabel tersebut.
+
+-   Nilai ukuran kesesuaian (fit model) yang dapat digambarkan pada grafik biplot dimensi dua adalah sebesar 80,12%. Nilai ini sangat tinggi, sehingga hasil biplot yang diperoleh sudah cukup representatif (model dipandang baik / fit).

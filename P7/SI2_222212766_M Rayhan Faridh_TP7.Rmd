@@ -1,0 +1,133 @@
+---
+title: "Penugasan Praktikum 7"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-03"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+#Penugasan Modul 6: MANOVA Two Way
+
+##Nomor 1 
+Sebuah studi dilakukan untuk melihat pengaruh kelas sosial ekonomi (kaya, menengah, miskin) dan jenis kelamin (Laki-laki, Perempuan) untuk melihat keramahan dan optimisme dari 24 responden. Keramahan dan optimisme diukur dengan suatu skor (skala 0-100) yang diperoleh dengan memberikan sejumlah pertanyaan. Skor yang diperoleh sebagai berikut:
+
+```{r}
+data7 = read.csv("./PenugasanP7.csv")
+attach(data7)
+data7
+```
+
+Lakukan uji melihat apakah ada pengaruh dari kedua faktor tersebut!\
+
+##Pembahasan
+
+### Uji Homogenitas Matriks Kovarian
+
+Lakukan uji melihat apakah ada pengaruh dari kedua faktor tersebut!
+
+```{r}
+library(biotools)
+```
+```{r}
+boxM(cbind(Kerahamahan, Optimisme), Jenis_Kelamin)
+```
+```{r}
+boxM(cbind(Kerahamahan, Optimisme), Social_Ekonomi)
+```
+```{r}
+boxM(cbind(Kerahamahan, Optimisme), paste(Jenis_Kelamin,Social_Ekonomi))
+```
+Keputusan: Gagal Tolak $H_0$ karena p-value \> 0.05
+
+Diperoleh bahwa semua matriks kovarian pada tiap populasi yang diuji tidak terdapat perbedaan dalam tingkat signifikansi 5%, sehingga asumsi kesamaan matriks kovarians terpenuhi.
+
+### Uji Kenormalan Multivariat
+
+```{r}
+library(RVAideMemoire)
+library(dplyr)
+```
+```{r}
+mshapiro.test(data7[data7$Jenis_Kelamin=="laki-laki", c(3:4)])
+```
+```{r}
+mshapiro.test(data7[data7$Jenis_Kelamin=="Perempuan", c(3:4)])
+```
+```{r}
+mshapiro.test(data7[data7$Social_Ekonomi=="Miskin", c(3:4)])
+```
+```{r}
+mshapiro.test(data7[data7$Social_Ekonomi=="Kaya", c(3:4)])
+```
+```{r}
+mshapiro.test(data7[data7$Social_Ekonomi=="Menengah", c(3:4)])
+```
+Keputusan: Gagal Tolak $H_0$ karena p-value \> 0.05
+
+Diperoleh bahwa setiap populasi yang diuji berasal dari sebaran normal multivariat dengan tingkat signifikansi 5%, sehingga asumsi kenormalan dipenuhi.
+
+### Uji MANOVA Two-Way dengan Interaksi
+
+#### Hipotesis
+
+$$
+\begin{gathered} 
+Hipotesis \ Pertama \\
+H_0: \tau_1 = \tau_2 = 0  \\
+H_1 : paling \ sedikit \ satu \ \tau_i \neq 0 \\
+\\
+Hipotesis \ Kedua \\
+H_0: \beta_1 = \beta_2 = \beta_3 = 0  \\
+H_1 : paling \ sedikit \ satu \ \beta_i \neq 0 \\
+\\
+Hipotesis \ Ketiga \\
+H_0: \gamma_{11} = \gamma_{12} = \gamma_{13} = \gamma_{21} = \gamma_{22} = \gamma_{23} = 0  \\
+H_1 : paling \ sedikit \ satu \ \beta_i \neq 0 \\
+\end{gathered}
+$$
+#### Tingkat signifikansi
+
+$$
+\alpha = 0.05
+$$
+#### Daerah kritis
+
+$$
+\begin{gathered} Tolak \ H_0 \ jika \ p-value < 0.05  \end{gathered}
+$$
+#### Statistik hitung
+
+```{r}
+result = manova(cbind(Kerahamahan, Optimisme) ~ Jenis_Kelamin * Social_Ekonomi)
+summary(result, rest="Wilks")
+```
+
+Diperoleh bahwa nilai $p-value \ interaksi \ = 0.002985$
+
+#### Keputusan
+
+$$
+Tolak \ H_0 \ karena \ p-value < 0.05
+$$
+#### Kesimpulan
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa terdapat pengaruh interaksi dari kedua faktor tersebut.
+
+Karena terdapat pengaruh interaksi dari kedua faktor, tidak disarankan untuk menguji pengaruh tiap faktor karena pengaruh utama faktor tidak memiliki interpretasi yang jelas. Akan tetapi, dilakukan uji ANOVA two-way untuk mencari pada variabel mana terjadi interaksi.
+
+#### Post-Hoc: Uji ANOVA Two-Way
+
+```{r}
+#untuk variabel ramah
+result = aov(Kerahamahan ~ Jenis_Kelamin*Social_Ekonomi)
+summary(result)
+
+#untuk variabel optimis
+result = aov(Optimisme ~ Jenis_Kelamin*Social_Ekonomi)
+summary(result)
+```
+
+Dari hasil pengujian di atas, nampak bahwa dengan tingkat signifikansi 5%, terdapat pengaruh interaksi pada kedua faktor di variabel Optimisme.

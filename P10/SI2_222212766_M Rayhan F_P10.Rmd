@@ -1,0 +1,62 @@
+---
+title: "Praktikum 10"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-12"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(factoextra)
+library(dplyr)
+library(magrittr)
+```
+
+```{r}
+#import data
+data <- read.csv("./datasim2.csv", sep=";")
+
+# Mengubah data menjadi data frame
+data <- data %>% data.frame()
+
+# Menggunakan kolom kab_kot sebagai row names
+row.names(data) <- data %>% select(kab_kot) %>% t()
+
+# Menghapus kolom kab_kot yang tidak diperlukan dalam PCA
+data <- data %>% select(-kab_kot)
+
+# Memastikan bahwa hanya kolom numerik yang digunakan untuk PCA
+data_numeric <- data %>% select_if(is.numeric)
+
+# Menghitung PCA dengan data numerik
+pca <- prcomp(data_numeric, scale = TRUE)
+
+# Menampilkan summary PCA
+summary(pca)
+```
+
+```{r}
+# Menampilkan biplot
+fviz_pca_biplot(pca, repel = TRUE, geom.ind = c("point", "text"), 
+                col.ind = "black", col.var = "blue", 
+                title = "Biplot PCA") + 
+  theme(text = element_text(size = 12))
+```
+
+```{r}
+# Individu terpilih
+individu_terpilih <- c("A", "F", "K", "P", "Z")
+
+# Membuat biplot dengan label hanya untuk individu terpilih
+fviz_pca_biplot(pca, label = c("var", "ind"), 
+                repel = TRUE,
+                geom.ind = c("point", "text"), # Menampilkan titik individu 
+                col.ind = "red", # Warna titik individu menjadi merah
+                col.var = "black", # warna vector variabel
+                select.ind = list(name = individu_terpilih), # Memilih individu 
+                title = "Biplot PCA dengan Label Individu Terpilih") + 
+  theme(text = element_text(size = 14)) # Memperbesar ukuran teks
+```

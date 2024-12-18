@@ -1,0 +1,129 @@
+---
+title: "Praktikum 9"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-09"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Contoh 1
+
+Gunakan dataset investmen dari package”sandwich” untuk melakukan analisis faktor. Dataset investment terdiri dari tujuh kolom. Kolom yang kita gunakan untuk analisis faktor ini terdiri dari 6 kolom atau 6 variabel yaitu:
+X1=GNP, X2=Investment, X3=Price, X4=Interest, X5=RealGNP, X6=RealInv
+```{r}
+#Input Data
+data(Investment, package="sandwich")
+Investment <- as.data.frame(Investment[,1:6])
+```
+
+```{r}
+#standardisasi data
+zinvestment<-data.frame(scale(Investment))
+
+#cek histogram dan kurva setiap variabel
+hist(zinvestment[,1], prob=TRUE, main="X1", xlab="X1")
+lines(density(zinvestment[,1]))
+hist(zinvestment[,2], prob=TRUE, main="X2", xlab="X2")
+lines(density(zinvestment[,2]))
+hist(zinvestment[,3], prob=TRUE, main="X3", xlab="X3")
+lines(density(zinvestment[,3]))
+hist(zinvestment[,4], prob=TRUE, main="X4", xlab="X4")
+lines(density(zinvestment[,4]))
+hist(zinvestment[,5], prob=TRUE, main="X5", xlab="X5")
+lines(density(zinvestment[,5]))
+hist(zinvestment[,6], prob=TRUE, main="X6", xlab="X6")
+lines(density(zinvestment[,6]))
+```
+```{r}
+#normality test
+library("MVN")
+result <- mvn(data =zinvestment,mvnTest = "mardia")
+result
+```
+Berdasarkan hasil tersebut didapatkan bahwa variabel yang normal hanya pada 𝑋5 dan 𝑋6 . Namun, untuk kepentingan analisis maka data diasumsikan memenuhi asumsi normalitas.
+
+Hipotesis Bartlet
+𝐻0 : 𝜌 = 1 (Tidak ada korelasi antar variabel)
+𝐻1 : 𝜌 ≠ 1 (Terdapat korelasi antar variabel)
+```{r}
+#Bartlett test 
+library(REdaS)
+bart_spher(zinvestment)
+```
+Berdasarkan uji bartlett diatas didapatkan p-value < 0.05 maka keputusannya adalah tolak 𝐻0. Artinya, dengan tingkat signifikansi 5% dapat disimpulkan bahwa terdapat korelasi antar variabel.
+
+```{r}
+##Kaiser-Meyer-Olkin (KMO)
+library("psych")
+KMO(zinvestment)
+```
+Berdasarkan uji KMO, didapatkan overal MSA 0.72 yang berarti data sudah cukup baik untuk dilakukan analisis faktor. Hal ini sejalan dengan hasil MSA, dimana tiap variabel bernilai > 0.5, sehingga semua variabel dapat digunakan dalam analisis faktor.
+Kesimpulan: Sehingga akan dilanjutkan dengan analisis faktor.
+
+```{r}
+#Analisis Faktor
+R<-cov(zinvestment)
+eigen<-eigen(R)
+eigen
+```
+Berdasarkan nilai eigen diatas, terlihat bahwa nilai eigen yang lebih besar dari 1 hanya 5.517, sedangkan niai eigen lainnya dibawah 1. Sehingga, hanya 1 faktor yang diusulkan untuk dipertahankan.
+
+
+```{r}
+Investment_fac<- factanal(factors=1, covmat=R)
+Investment_fac
+```
+Semua variabel memiliki loading tinggi (di atas 0.8), menunjukkan hubungan kuat dengan Faktor 1.
+
+SS Loadings adalah jumlah kuadrat dari semua factor loadings untuk Faktor 1. Memberikan indikasi total variansi yang dijelaskan oleh Faktor 1.
+
+Faktor 1 menjelaskan 89.1% dari total variansi dalam data. Ini menunjukkan bahwa Faktor 1 sangat representatif untuk menjelaskan hubungan antar-variabel.
+
+
+## Contoh 2
+
+Data pada Tabel 5.1 menunjukkan angka harapan hidup dalam beberapa tahun menurut negara, umur, dan jenis kelamin. Data tersebut berasal dari Keytz dan Flieger (1971) dan berhubungan dengan harapan hidup di tahun 1960-an.
+```{r}
+#Input data
+library(readr)
+# Membuat data frame
+life_data <- data.frame(
+  negara = c("Algeria", "Cameroon", "Madagascar", "Mauritius", "Reunion", "Seychelles", 
+             "South Africa (C)", "South Africa (W)", "Tunisia", "Canada", "Costa Rica", "Dominican Rep."),
+  m0 = c(63, 34, 38, 59, 56, 62, 50, 65, 56, 69, 65, 64),
+  m25 = c(51, 29, 30, 42, 38, 44, 39, 44, 46, 47, 48, 50),
+  m50 = c(30, 13, 17, 20, 18, 24, 20, 22, 24, 24, 26, 28),
+  m75 = c(13, 5, 7, 6, 7, 7, 7, 7, 11, 8, 9, 11),
+  w0 = c(67, 38, 38, 64, 62, 69, 55, 72, 63, 75, 68, 66),
+  w25 = c(54, 32, 34, 46, 46, 50, 43, 50, 54, 53, 50, 51),
+  w50 = c(34, 17, 20, 25, 25, 28, 23, 27, 33, 29, 27, 29),
+  w75 = c(15, 6, 7, 8, 10, 14, 8, 9, 19, 10, 10, 11)
+)
+life_data <- as.matrix(life_data[,-1])
+View(life_data)
+```
+
+```{r}
+#eigen 
+eigen1 <- eigen(cor(life_data))
+eigen1
+```
+Berdasarkan output tersebut didapatkan bahwa nilai eigen yang lebih besar dari 1 hanya 6.511 dan 1.008. Hal ini menunjukkan ada 2 Factor yang diusulkan.
+
+```{r}
+sapply(1:3,function(f)
+  factanal(life_data,factors=f,method="mle")$PVAL)
+```
+Hasil di atas menunjukkan jumlah factor yang harus kita ekstrak adalah 3, 
+dimana p-value sudah tidak signifikan.
+
+```{r}
+factanal(life_data,factors = 3,method="mle", rotation = "varimax")
+```
+Interpretasi:
+Terlihat bahwa faktor pertama didominasi oleh harapan hidup saat lahir bagi laki-laki dan perempuan; mungkin faktor ini bisa diberi label "ketahanan hidup saat lahir".
+Yang kedua mencerminkan harapan hidup pada usia yang lebih tua, dan kita mungkin menyebutnya "ketahanan hidup di antara orang tua".
+Faktor ketiga dari rotasi varimax memiliki beban tertinggi untuk harapan hidup laki-laki berusia 50 dan 75 dan dalam nada yang sama mungkin diberi label “ketahanan hidup untuk laki-laki lanjut usia”.

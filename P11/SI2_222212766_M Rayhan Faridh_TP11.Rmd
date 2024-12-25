@@ -1,0 +1,351 @@
+---
+title: "Penugasan Praktikum 11"
+author: "Muhammad Rayhan Faridh"
+date: "2024-12-21"
+output: word_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Soal
+
+The admission officer of a business school has used an "index" of undergraduate grade point average (GPA) and graduate management aptitude test (GMAT) scores to help decide which applicants should be\
+admitted to the school's graduate programs. Keterangan pada kolom Admit:
+
+Kode 1 = Admit
+
+Kode 2 = Do not Admit
+
+Kode 3 = Borderline
+
+Data terdapat pada file admission.csv
+
+a\. Tentukan fungsi diskriminan yang terbentuk!\
+b. Hitung t-test untuk setiap variabel!\
+
+# Jawab
+
+```{r}
+library(MASS)
+library(tidyverse)
+library(caret)
+library(MVN)
+library("biotools")
+library(dplyr)
+```
+
+## Import data
+
+```{r}
+admission = read.csv("./admission.csv")
+head(admission)
+```
+
+## Ringkasan deskriptif
+
+```{r}
+admission$admit <- as.factor(admission$admit)
+summary(admission)
+```
+
+## Uji MANOVA one-way
+
+```{r}
+mnv <- manova(cbind(GPA, GMAT)~admit, data=admission)
+summary(mnv)
+```
+
+Keputusan: $Tolak \ H_0 \ karena \ p-value < 0.05$
+
+Kesimpulan:
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa terdapat perbedaan rata-rata antar kategori admit terhadap variabel GPA dan GMAT.
+
+## Uji asumsi Analisis Diskriminan
+
+### Uji homogenitas matriks kovarians
+
+Hipotesis:
+
+$$
+H_0 : \Sigma_1=\Sigma_2 \\
+H_1: Minimal \ ada \ satu \ \Sigma_i \  yang \ berbeda; \ i=1,2,3
+$$
+
+```{r}
+boxM(admission[,-3], admission[,3])
+```
+
+Keputusan: $Tolak \ H_0 \ karena \ p-value < 0.05$
+
+Kesimpulan:
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa minimal terdapat satu matriks kovarians yang berbeda pada kategori admit.
+
+### Uji normalitas
+
+Hipotesis:
+
+$$
+H_0: X \  berdistribusi \ N_2(\mu,\Sigma) \\
+H_1: X \ tidak \ berdistribusi \ N_2(\mu, \Sigma)
+$$
+
+```{r}
+mvn(admission[,-3])
+```
+
+Keputusan: $Gagal \ Tolak \ H_0 \ karena \ p-value > 0.05$
+
+Kesimpulan:
+
+Dengan tingkat signifikansi 5%, terdapat cukup bukti untuk menyatakan bahwa data tersebut mengikuti distribusi normal multivariat.
+
+### Pengecekan multikolinieritas
+
+```{r}
+cor(admission[,-3])
+```
+
+Nampak bahwa korelasi antara variabel GPA dan GMAT \< 0.8; artinya data memenuhi asumsi non-multikolinieritas.
+
+Dikarenakan data tersebut melanggar asumsi kesamaan matriks kovarians, seharusnya analisis yang dapat dilakukan adalah analisis diskriminan kuadratik (QDA), apalagi jumlah datanya besar (n=85 observasi). Namun, disini dicoba dulu untuk membuat model analisis diskriminan linier (LDA), setelah itu membuat QDA.
+
+## Membuat model LDA
+
+```{r}
+set.seed(123)
+k <- length(levels(admission$admit))
+n <- nrow(admission)
+# data training sebanyak
+idx <- sample(1:n, 36)
+idx
+admission.tr <- admission[idx,] #data training
+admission.ts <- admission[-idx,] #data testing
+
+# Analisis Diskriminan
+fit<-lda(admit~.,data=admission.tr)
+# Output dari analisis diskriminan
+fit
+```
+
+-   Output Means menunjukkan rata-rata tiap kelompok. Rata-rata variabel GPA pada grup 1 (admit) adalah 3,42; grup 2 (do not admit) adalah 2,51; serta grup 3 (borderline) adalah 2,92. Sedangkan untuk variabel GMAT, rata-rata pada grup 1 (admit) adalah 585,4; grup 2 (do not admit) adalah 461,54; dan grup 3 (borderline) adalah 457,85.
+
+-   Fungsi diskriminan:
+
+    -   $LD_1 = -5,8611 \ GPA - 0,0098 \ GMAT$
+
+    -   $LD_2 = 2,2030 \ GPA - 0,0154 \ GMAT$
+
+-   Dari output proportion of trace dapat diinterpretasikan bahwa LD1 menjelaskan perbedaan antarkelompok sebesar 97% sedangkan LD2 menjelaskan 3%.
+
+### Scores
+
+```{r}
+zscore = predict(fit,admission[,-3])
+knitr::kable(head(zscore$x, 10))
+```
+
+### Korelasi
+
+Korelasi antara variabel awal dengan discriminant score.
+
+```{r}
+kor1 <- t(cor(zscore$x[,1],admission[,-3]))
+kor2 <- t(cor(zscore$x[,2],admission[,-3]))
+tabkor<-data.frame(kor1,kor2)
+tabkor
+```
+
+Korelasi variabel awal dan fungsi kanonik yang telah dapat menjelaskan variabel mana yang menjadi kontributor terbanyak pada perbedaan. Di atas telah dihasilkan bahwa untuk fungsi kanonik pertama telah menjelaskan perbedaan antarkelompok data sebesar 97% , sehingga kita tertarik untuk mengetahui variabel yang menjadi kontributor terbanyak pada perbedaan yang dihasilkan pada fungsi tersebut. Dari output tersebut, nampak bahwa variabel GPA menjadi kontributor terbesar karena memiliki korelasi terbesar dengan fungsi kanonik pertama.
+
+### Prediksi data testing
+
+```{r}
+pred <- predict(fit,admission.ts[,-3])
+pred
+```
+
+Nilai posterior adalah nilai peluang suatu observasi untuk masuk ke dalam kelas, penentuan kelas diambil dari nilai posterior yang terbesar dari setiap observasi.
+
+### Penilaian akurasi hasil prediksi
+
+```{r}
+ct <- table(admission.ts$admit, pred$class)
+ct
+
+sum(diag(prop.table(ct)))
+```
+
+Pembagian observasi per kelas menurut output di atas:
+
+-   Observasi di kategori admit (kelas 1): Observasi yang masuk kelas 1 dan sebenarnya merupakan kelas 1 ada 17 observasi, sedangkan observasi yang masuk kelas 1 tetapi sebenarnya masuk kelas 3 (borderline) ada 1 observasi. Artinya, ada 1 observasi yang salah masuk kelas.
+
+-   Observasi di kategori do not admit (kelas 2): Observasi yang masuk kelas 2 dan sebenarnya merupakan kelas 2 ada 13 observasi. Tidak ada observasi yang salah masuk kelas pada kategori ini.
+
+-   Observasi di kategori borderline (kelas 3): Observasi yang masuk kelas 3 dan sebenarnya merupakan kelas 3 ada 12 observasi, sedangkan observasi yang masuk kelas 3 tetapi sebenarnya masuk kelas 1 ada 4 observasi serta observasi yang masuk kelas 3 tetapi sebenarnya masuk kelas 2 ada 2 observasi. Artinya bahwa ada 6 observasi yang salah masuk kelas.
+
+Terlihat bahwa model berhasil mengklasifikasikan hampir semua data yaitu 85,7% dengan benar.
+
+### Plot LDA
+
+```{r}
+lda.data <- cbind(admission.tr, predict(fit)$x)
+ggplot(lda.data, aes(LD1, LD2)) +
+geom_point(aes(color = as.factor(admit))) +
+theme_minimal()
+```
+
+## Membuat model QDA
+
+```{r}
+fit.qda<-qda(admit~.,data=admission.tr)
+# Output dari analisis diskriminan
+fit.qda
+```
+
+### Penilaian akurasi hasil prediksi
+
+```{r}
+pred2 <- predict(fit.qda,admission.ts[,-3])
+ct2 <- table(admission.ts$admit, pred2$class)
+ct2
+
+sum(diag(prop.table(ct2)))
+```
+
+Pembagian observasi per kelas menurut output di atas:
+
+-   Observasi di kategori admit (kelas 1): Observasi yang masuk kelas 1 dan sebenarnya merupakan kelas 1 ada 20 observasi, sedangkan observasi yang masuk kelas 1 tetapi sebenarnya masuk kelas 3 (borderline) ada 3 observasi. Artinya, ada 3 observasi yang salah masuk kelas.
+
+-   Observasi di kategori do not admit (kelas 2): Observasi yang masuk kelas 2 dan sebenarnya merupakan kelas 2 ada 14 observasi, sedangkan observasi yang masuk kelas 2 tetapi sebenarnya masuk kelas 3 ada 1 observasi. Artinya, ada 1 observasi yang salah masuk kelas.
+
+-   Observasi di kategori borderline (kelas 3): Observasi yang masuk kelas 3 dan sebenarnya merupakan kelas 3 ada 9 observasi, sedangkan observasi yang masuk kelas 3 tetapi sebenarnya masuk kelas 1 ada 1 observasi serta observasi yang masuk kelas 3 tetapi sebenarnya masuk kelas 2 ada 1 observasi. Artinya bahwa ada 2 observasi yang salah masuk kelas.
+
+Terlihat bahwa model berhasil mengklasifikasikan hampir semua data yaitu 87,8% dengan benar.
+
+## Perbandingan QDA dan LDA
+
+-   Dibandingkan dengan LDA, nampak bahwa QDA lebih baik dalam mengklasifikasikan data tersebut. Hal ini dibuktikan nilai hit-score yang lebih besar dibandingkan dengan LDA.
+
+### Analisis Cluster
+
+## **1. Membuka Data**
+```{r}
+library(readxl)
+library(dplyr)
+library(DT)
+library(corrplot)
+library(factoextra)
+library(tibble)
+# Tampilkan ringkasan data
+summary(admission)
+```
+
+## **2. Standarisasi Variabel**
+```{r}
+# Standarisasi variabel GPA dan GMAT
+data_standardized <- round(scale(admission[, c("GPA", "GMAT")]), 4)
+
+# Tampilkan hasil standarisasi
+datatable(data_standardized, caption = "Data Hasil Standardisasi")
+
+```
+
+## **3. Eksplorasi Data**
+```{r}
+# Korelasi antar variabel
+M <- cor(data_standardized)
+corrplot(M, method = "ellipse")
+
+# Tampilkan nilai korelasi
+cor(data_standardized)
+
+```
+Interpretasi : Karena korelasi antara GPA dan GMAT lemah maka tidak perlu dilakukan PCA
+
+
+```{r}
+# Visual Assessment of Cluster Tendency
+dist.cor <- get_dist(data_standardized, method = "pearson")
+fviz_dist(dist.cor, lab_size = 8)
+```
+
+## **4. Pemeriksaan Kecenderungan Pengelompokan**
+```{r}
+# Menggunakan Hopkin's Statistics
+res <- get_clust_tendency(data_standardized, n = nrow(admission) - 1, graph = TRUE)
+res
+```
+Interpretasi : nilai Hopkin's sebesar 0.62 menunjukkan ada kecenderungan pembentukan cluster
+
+## **5. Menentukan Jumlah Klaster**
+```{r}
+# Elbow Plot untuk menentukan jumlah klaster optimal
+jumlah_klaster <- c(1:9)
+within_ss <- c()
+
+for (i in jumlah_klaster) {
+  within_ss <- c(within_ss, kmeans(x = data_standardized, centers = i, nstart = 25)$tot.withinss)
+}
+
+plot(x = jumlah_klaster, y = within_ss, type = "b",
+     xlab = "Number of Cluster",
+     ylab = "Total Within Sum of Squares",
+     main = "Elbow Plot")
+abline(v = 3, col = "red")
+
+```
+Dari Elbow Plot, jumlah klaster optimal adalah 3.
+
+## **6. Analisis Cluster**
+```{r}
+# K-Means Clustering
+set.seed(123)
+kmeans_clustering <- kmeans(x = data_standardized, centers = 3, nstart = 25)
+
+# Tampilkan hasil clustering
+kmeans_clustering
+
+```
+## **7. Centroid Data Asli**
+```{r}
+# Menampilkan nilai centroid dalam satuan asli
+admission %>%
+  mutate(Klaster = kmeans_clustering$cluster) %>%
+  group_by(Klaster) %>%
+  summarise(
+    Mean_GPA = mean(GPA),
+    Mean_GMAT = mean(GMAT)
+  )
+
+```
+Klaster 1: Rata-rata nilai GPA dan GMAT lebih rendah.
+Klaster 2: Nilai GPA dan GMAT rata-rata menengah.
+Klaster 3: Rata-rata nilai GPA dan GMAT paling tinggi.
+
+## **8. Pengelompokan Data ke Dalam Klaster**
+```{r}
+# Menambahkan kolom Klaster ke data asli
+cluster_data <- admission %>%
+  mutate(Klaster = kmeans_clustering$cluster) %>%
+  rownames_to_column(var = "Observasi") %>%
+  select(Observasi, Klaster) %>%
+  arrange(Klaster)
+
+# Tampilkan data dengan klaster
+datatable(cluster_data, caption = "Hasil Pengelompokan Klaster")
+
+```
+
+## **9. Visualisasi Hasil**
+```{r}
+# Visualisasi hasil clustering
+fviz_cluster(kmeans_clustering, data = data_standardized,
+             geom = "point", ellipse.type = "norm",
+             ggtheme = theme_minimal())
+
+```

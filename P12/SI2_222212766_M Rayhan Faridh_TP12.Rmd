@@ -1,0 +1,169 @@
+---
+title: "Penugasan Praktikum 12"
+author: "Muhammad Rayhan Faridh"
+date: "2025-01-13"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Input Data**
+
+```{r}
+library(readxl)
+data=read_excel("./dataTP12.xlsx")
+head(data)
+```
+
+**Menghitung matriks jarak Euclidean**
+
+```{r}
+jarak=dist(data[-1])
+
+#Matriks jarak kuadrat, sesuai rumus klasik dalam MDS.
+J2=jarak^2
+```
+
+**Sentralisasi matriks jarak (mengurangi rata-rata dari masing-masing kolom atau baris).**
+
+```{r}
+# Center columns
+B <- scale(J2, center = TRUE, scale = FALSE)
+# Center rows
+B <- t(scale(t(B), center = TRUE, scale = FALSE))
+B <- -0.5 * B
+```
+
+**Melakukan dekomposisi matriks B untuk mendapatkan nilai eigen dan vektor eigen.**
+
+```{r}
+decomp <- eigen(B) 
+Lambda <- diag(pmax(decomp$values, 0))
+X_tilde <- decomp$vectors %*% Lambda^0.5
+
+#Visualisai
+plot(X_tilde)
+```
+
+**MDS dengan 2 dimensi**
+
+```{r}
+mds <- cmdscale(jarak, k = 2)
+all.equal(X_tilde[,1:2], mds, check.attributes = FALSE)
+
+```
+
+**Transformasi Data dan Anotasi**
+
+```{r}
+library(tidyverse)
+# Let's add annotations
+dimnames(X_tilde) <- list(data$Provinsi,
+                          paste0("MDS", seq_len(ncol(X_tilde))))
+
+X_tilde <- as.data.frame(X_tilde) %>%
+  rownames_to_column("Provinsi")
+head(X_tilde)
+
+```
+
+**Visualisasi**
+
+```{r}
+x_pusat=mean(mds[,1])
+y_pusat=mean(mds[,2])
+library(ggrepel)
+X_tilde %>%
+  ggplot(aes(MDS1, MDS2)) +
+  geom_point(aes()) +
+  geom_label_repel(aes(label = Provinsi),max.overlaps = 100) +
+  theme_minimal() +
+  theme(legend.position = "top", plot.margin = margin(20, 20, 20, 20)) + geom_vline(xintercept=x_pusat,linetype="dashed",color="red") + geom_hline(yintercept=y_pusat,linetype="dashed",color="red") + theme(text = element_text(size = 12))
+```
+
+***Interpretasi :***
+
+MDS digunakan untuk mengolompokkan data berdasarkan variabel-variabel yang diukur antardata sehingga didapatkan informasi-infromasi tentang kemiripan data-data tersebut. Berdasarkan grafik tersebut provinsi-provinsi di atas dikelompokkan beradasarkan kemiripan PDRB ADHK, PPM, TPT, IPM, dan Investasi. Pengelompokkan tersebut dilihat dari letak kuadran masing-masing provinsi yang terdiri atas 4 kuadran.
+
+**Menambahkan Kategori**
+
+```{r}
+X_tilde <- X_tilde %>%
+  mutate(Kelompok = case_when(
+    Provinsi %in% c("Nusa Tenggara Barat", "Kalimantan Selatan",
+                    "Kalimantan Barat", "Kalimantan Utara", "Maluku Utara", "Kep. Bangka Belitung", "Bengkulu", "Sumatera Selatan", "Kalimantan Tengah") ~ "Kelompok I",
+    Provinsi %in% c("Kalimantan Timur", "Riau", "Banten", "Jawa Barat", "DKI Jakarta") ~ "Kelompok II",
+    Provinsi %in% c("Jawa Timur", "Jawa Tengah", "Sumatera Utara",
+                    "Sulawesi Selatan") ~ "Kelompok III",
+    Provinsi %in% c("Papua", "Papua Barat", "Maluku", "Sumatera Barat", "Sulawesi Tengah", "Jawa Tengah", "Lampung", "Maluku", "Yogyakarta", "Nusa Tenggara Timur", "Bali", "Kep. Riau", "Aceh", "Jambi","Gorontalo", "Sulawesi Utara", "Sulawesi Tenggara","Sulawesi Barat") ~ "Kelompok IV"))
+
+```
+
+***Interpretasi :***
+
+Pada peta konfigurasi provinsi diatas dapat dilihat pola kedekatan antarprovinsi sebagai berikut :
+
+-   Kelompok I : Nusa Tenggara Barat, Kalimantan Selatan, Kalimantan Barat, Kalimantan Utara, Maluku Utara, Kep. Bangka Belitung, Bengkulu, Sumatera Selatan, Kalimantan Tengah
+
+-   Kelompok II : Kalimantan Timur, Riau, Banten, Jawa Barat, DKI Jakarta
+
+-   Kelompok III : Jawa Timur, Jawa Tengah, Sumatera Utara, Sulawesii Selatan
+
+-   Kelompok IV : Papua, Papua Barat, Maluku, Sumatera Barat, Sulawesi Tengah, Jawa Tengah, Lampung, Maluku, Yogyakarta, Nusa Tenggara Timur, Bali, Kep. Riau, Aceh, Jambi, Gorontalo, Sulawesi Utara, Sulawesi Tenggara, Sulawesi Barat.
+
+Pengelompokan provinsi-provinsi pada peta konfigurasi diatas didasarkan pada kelima variabel sosial dan ekonomi. Jika tanpa melihat kuadran, misal sulawesi tengah dan sulawesi selatan mempunyai jarak yang dekat pada peta konfigurasi, ini menunjukkan adanya karakteristik ekonomi dan sosial yang mirip antarkeduanya.
+
+**Visualisasi setelah Pengelompokkan**
+
+```{r}
+X_tilde %>%
+  ggplot(aes(MDS1, MDS2)) +
+  geom_point(aes(colour=Kelompok)) +
+  geom_label_repel(aes(label = Provinsi),max.overlaps = 350) +
+  theme_minimal() +
+  theme(legend.position = "top", plot.margin = margin(20, 20, 20, 20)) + geom_vline(xintercept=x_pusat,linetype="dashed",color="red") + geom_hline(yintercept=y_pusat,linetype="dashed",color="red") + theme(text = element_text(size = 12))
+
+
+```
+
+***Interpretasi :***
+
+-   Kelompok I (Merah)
+
+    -   Provinsi di kelompok ini memiliki **PDRB sedang hingga rendah**, **TPT rendah**, **PPM tinggi**, serta **Investasi yang belum optimal**.
+
+    -   **IPM sedang hingga rendah**, menunjukkan tingkat pembangunan manusia yang belum setinggi provinsi lainnya.
+
+-   Kelompok II (Hijau)
+
+    -   Kelompok ini memiliki **PDRB tinggi** dan **Investasi besar**, yang menandakan provinsi dengan aktivitas ekonomi yang lebih maju.
+
+    -   **TPT rendah** dan **IPM tinggi**, mengindikasikan kualitas hidup yang lebih baik dan tingkat pengangguran yang terkendali.
+
+    -   **PPM rendah**, menunjukkan tingkat kemiskinan yang relatif kecil.
+
+-   Kelompok III (Biru)
+
+    -   **PDRB sedang**, mencerminkan aktivitas ekonomi yang relatif stabil, namun tidak setinggi provinsi di kuadran II.
+
+    -   **IPM sedang hingga tinggi**, menunjukkan kualitas hidup yang relatif baik.
+
+    -   **TPT sedang hingga rendah**, dengan tingkat pengangguran terkendali.
+
+    -   **PPM sedang hingga rendah**, mengindikasikan tantangan dalam menekan angka kemiskinan meskipun tidak setinggi kelompok I
+
+    -   **Investasi stabil**, mencerminkan peluang ekonomi yang cukup baik
+
+-   Kelompok IV (Ungu)
+
+    -   **PDRB rendah**, menunjukkan aktivitas ekonomi yang masih terbatas.
+
+    -   **IPM rendah**, mencerminkan pembangunan manusia yang masih membutuhkan perhatian lebih.
+
+    -   **TPT tinggi**, menunjukkan tantangan besar dalam menciptakan lapangan kerja.
+
+    -   **PPM tinggi**, dengan proporsi penduduk miskin yang signifikan.
+
+    -   **Investasi rendah**, mencerminkan kurangnya daya tarik investasi ke provinsi ini.

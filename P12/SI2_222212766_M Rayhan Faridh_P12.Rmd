@@ -1,0 +1,100 @@
+---
+title: "Praktikum 12"
+author: "Muhammad Rayhan Faridh"
+date: "2025-01-09"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+Data1 <- read_excel("./data1-2.xlsx", sheet = "kota")
+```
+
+```{r}
+Delta <- dist(Data1)
+D <- Delta^2
+# Center columns
+B <- scale(D, center = TRUE, scale = FALSE)
+# Center rows
+B <- t(scale(t(B), center = TRUE, scale = FALSE))
+B <- -0.5 * B
+
+decomp <- eigen(B)
+Lambda <- diag(pmax(decomp$values, 0))
+X_tilde <- decomp$vectors %*% Lambda^0.5
+plot(X_tilde)
+
+mds <- cmdscale(Delta, k = 2)
+all.equal(X_tilde[,1:2], mds,
+          check.attributes = FALSE)
+```
+
+Pada peta konfigurasi kota diatas dapat dilihat pola kedekatan antar kota sebagai berikut: 
+
+Kelompok I : Jakarta, Bengkulu, Yogyakarta, Semarang,Denpasar, Surabaya. 
+
+Kelompok II : Bandung. 
+
+Kelompok III : Samarinda, Kupang, Jayapura. 
+
+Kelompok IV : Padang, Manado, Jambi, Medan, Ambon, Aceh. 
+
+Pengelompokan kota-kota pada peta konfigurasi di atas didasarkan pada kelima variabel kondisi geografisnya.
+
+Jika tanpa melihat kuadran, misal surabaya dan padang mempunyai jarak yang dekat pada peta konfigurasi, ini menunjukkan adanya kemiripan / kedekatan antar keduanya.
+
+```{r}
+library(readxl)
+Data2 <- read_excel("./data1-2.xlsx", sheet = "tv")
+```
+
+```{r}
+Delta <- dist(Data2)
+D <- Delta^2
+# Center columns
+B <- scale(D, center = TRUE, scale = FALSE)
+# Center rows
+B <- t(scale(t(B), center = TRUE, scale = FALSE))
+B <- -0.5 * B
+
+decomp <- eigen(B)
+Lambda <- diag(pmax(decomp$values, 0))
+X_tilde <- decomp$vectors %*% Lambda^0.5
+plot(X_tilde)
+
+mds <- cmdscale(Delta, k = 2)
+all.equal(X_tilde[,1:2], mds,
+          check.attributes = FALSE)
+```
+
+Dilihat dari plot secara keseluruhan terdapat tiga kelompok stasiun televisi yang memiliki kemiripan antar anggotanya tetapi berbeda dengan anggota kelompok lainnya.
+
+Ketiga kelompok itu adalah:
+
+RCTI, SCTV, INDOSIAR dan TRANSTV
+
+TPI dan GLOBALTV
+
+METROTV, LATIVI, TV7 dan ANTV
+
+Pengelompokan ini didasarkan pada program acara yang ditayangkan.
+
+
+Kemiripan antara stasiun televisi juga dapat dilihat dari jarak (distance) antara dua stasiun televisi yang dibandingkan.
+
+• Semakin KECIL jarak maka semakin MIRIP dua stasiun televisi yang dibandingkan.
+
+• Dari semua pasangan stasiun televisi yang mungkin ada dalam plot, terdapat dua pasang stasiun televisi yang mempunyai jarak yang kecil. Pasangan tersebut adalah TPI-GlobalTV dan RCTI-SCTV
+
+• Tetapi jika dilihat lebih jelas lagi, jarak antara RCTI- SCTV lebih kecil daripada jarak TPI-GlobalTV, ini berarti, dari sekian banyak pasangan stasiun televisi yang dibandingkan, stasiun televisi SCTV paling mirip dengan stasiun televisi RCTI.
+
+
+Dari semua stasiun televisi yang diamati, RCTI dan SCTV merupakan dua stasiun televisi yang paling mirip jika dilihat dari jarak (distance) antar keduanya.
+
+• RCTI sebagai stasiun televisi swasta favorit memiliki beberapa kompetitor dalam hal program acara yang disenangi masyarakat yaitu Indosiar, SCTV dan TransTV.
+
+• Namun dari ketiga kompetitor tersebut, SCTV merupakan kompetitor terberat RCTI karena program acaranya yang paling mirip dengan RCTI

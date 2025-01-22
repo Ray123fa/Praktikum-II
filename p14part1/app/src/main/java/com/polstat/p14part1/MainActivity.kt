@@ -1,0 +1,58 @@
+package com.polstat.p14part1
+
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var nim: EditText
+    private lateinit var nama: EditText
+    private lateinit var kelas: EditText
+    private lateinit var nohp: EditText
+    private lateinit var addMhs: Button
+    private lateinit var lihatMhs: Button
+    private lateinit var dbHandler: DBHandler
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        nim = findViewById(R.id.nimEditText)
+        nama = findViewById(R.id.namaEditText)
+        kelas = findViewById(R.id.kelasEditText)
+        nohp = findViewById(R.id.nohpEditText)
+        addMhs = findViewById(R.id.tambahButton)
+
+        dbHandler = DBHandler(this)
+
+        addMhs.setOnClickListener {
+            val nimmhs = nim.text.toString()
+            val namamhs = nama.text.toString()
+            val kelasmhs = kelas.text.toString()
+            val nohpmhs = nohp.text.toString()
+
+            if (nimmhs.isEmpty() || namamhs.isEmpty() || kelasmhs.isEmpty() || nohpmhs.isEmpty()) {
+                Toast.makeText(this, "Lengkapilah semua data..", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dbHandler.addNewMahasiswa(nimmhs, namamhs, kelasmhs, nohpmhs)
+            Toast.makeText(this, "Data Mahasiswa Telah Ditambahkan", Toast.LENGTH_SHORT).show()
+
+            nim.setText("")
+            nama.setText("")
+            kelas.setText("")
+            nohp.setText("")
+        }
+
+        lihatMhs.setOnClickListener {
+            // Membuka aktivitas baru dengan Intent
+            val intent = Intent(this, ViewMahasiswa::class.java)
+            startActivity(intent)
+        }
+    }
+}

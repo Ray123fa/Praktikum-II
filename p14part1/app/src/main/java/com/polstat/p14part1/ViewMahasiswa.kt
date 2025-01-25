@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class ViewMahasiswa : AppCompatActivity() {
-
     private lateinit var mahasiswaModalArrayList: ArrayList<MahasiswaModal>
     private lateinit var dbHandler: DBHandler
     private lateinit var mahasiswaRVAdapter: MahasiswaRVAdapter

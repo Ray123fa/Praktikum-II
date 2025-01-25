@@ -19,12 +19,12 @@ class DBHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        val query = "CREATE TABLE $TABLE_NAME (" +
-                "$ID_COL INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "$NIM_COL TEXT, " +
-                "$NAMA_COL TEXT, " +
-                "$KELAS_COL TEXT, " +
-                "$NOHP_COL TEXT)"
+        val query = """CREATE TABLE $TABLE_NAME (
+            $ID_COL INTEGER PRIMARY KEY AUTOINCREMENT, 
+            $NIM_COL TEXT UNIQUE, 
+            $NAMA_COL TEXT, 
+            $KELAS_COL TEXT, 
+            $NOHP_COL TEXT)"""
         db.execSQL(query)
     }
 
@@ -33,7 +33,7 @@ class DBHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_
         onCreate(db)
     }
 
-    fun addNewMahasiswa(nim: String, nama: String, kelas: String, nohp: String) {
+    fun addNewMahasiswa(nim: String, nama: String, kelas: String, nohp: String): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(NIM_COL, nim)
@@ -41,28 +41,52 @@ class DBHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_
             put(KELAS_COL, kelas)
             put(NOHP_COL, nohp)
         }
-        db.insert(TABLE_NAME, null, values)
+
+        val success = db.insert(TABLE_NAME, null, values) != -1L
         db.close()
+        return success
     }
 
     fun readMahasiswa(): ArrayList<MahasiswaModal> {
+        val mahasiswaList = ArrayList<MahasiswaModal>()
         val db = readableDatabase
-        val cursor: Cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
+        val cursor: Cursor? = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
 
-        val mahasiswaModalArrayList = ArrayList<MahasiswaModal>()
-        if (cursor.moveToFirst()) {
-            do {
-                mahasiswaModalArrayList.add(
-                    MahasiswaModal(
-                        nim = cursor.getString(1),
-                        nama = cursor.getString(2),
-                        kelas = cursor.getString(3),
-                        nohp = cursor.getString(4)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                do {
+                    val mahasiswa = MahasiswaModal(
+                        it.getString(it.getColumnIndexOrThrow(NIM_COL)),
+                        it.getString(it.getColumnIndexOrThrow(NAMA_COL)),
+                        it.getString(it.getColumnIndexOrThrow(KELAS_COL)),
+                        it.getString(it.getColumnIndexOrThrow(NOHP_COL))
                     )
-                )
-            } while (cursor.moveToNext())
+                    mahasiswaList.add(mahasiswa)
+                } while (it.moveToNext())
+            }
         }
-        cursor.close()
-        return mahasiswaModalArrayList
+
+        cursor?.close()
+        return mahasiswaList
+    }
+
+    fun updateMahasiswa(originalNim: String, nim: String, nama: String, kelas: String, nohp: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(NIM_COL, nim)
+            put(NAMA_COL, nama)
+            put(KELAS_COL, kelas)
+            put(NOHP_COL, nohp)
+        }
+
+        val success = db.update(TABLE_NAME, values, "$NIM_COL=?", arrayOf(originalNim)) > 0
+        db.close()
+        return success
+    }
+
+    fun deleteMahasiswa(nim: String) {
+        val db = this.writableDatabase
+        db.delete(TABLE_NAME, "nim=?", arrayOf(nim))
+        db.close()
     }
 }

@@ -2,7 +2,6 @@ package com.polstat.p14part1
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -26,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         kelas = findViewById(R.id.kelasEditText)
         nohp = findViewById(R.id.nohpEditText)
         addMhs = findViewById(R.id.tambahButton)
+        lihatMhs = findViewById(R.id.lihatButton)
 
         dbHandler = DBHandler(this)
 
